@@ -1,0 +1,18 @@
+# Mengabaikan folder build dan debug
+bin/
+obj/
+
+# Mengabaikan file Database Lokal (PENTING!)
+*.mdf
+*.ldf
+*.ndf
+*.db
+*.sqlite
+*.sqlite3
+app.db
+
+# Mengabaikan konfigurasi rahasia saat tahap Development (Opsional, tapi disarankan)
+appsettings.Development.json
+
+# Mengabaikan file log
+*.log

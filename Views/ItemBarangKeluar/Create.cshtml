@@ -1,0 +1,248 @@
+@model BarangKeluarDinas.Models.ItemBarangKeluar
+
+@{
+    ViewData["Title"] = "Tambah Barang Keluar (Mode Kasir)";
+    var materialList = ViewBag.MaterialList as List<BarangKeluarDinas.Models.MasterMaterial>;
+}
+
+<div class="container-fluid mt-4 px-md-4">
+    <div class="row">
+        
+        <div class="col-md-5 mb-4">
+            <div class="card shadow-sm border-0 position-sticky" style="top: 20px;">
+                <div class="card-header bg-dark text-white fw-bold">
+                    <h5 class="mb-0">Control Panel Kasir Gudang</h5>
+                </div>
+                <div class="card-body bg-light">
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-secondary">1. Cari / Pilih Material Utama</label>
+                        <input type="text" class="form-control border-dark shadow-sm fs-5" id="scanSelectMaterial" list="materialDatalist" placeholder="Ketik nama atau nomor material..." required />
+                        
+                        <datalist id="materialDatalist">
+                            @if(materialList != null)
+                            {
+                                foreach(var item in materialList.Where(m => m.Status == "Y"))
+                                {
+                                    <option value="@item.NoMaterial" data-nama="@item.NamaUnit" data-stn="@item.Satuan" data-stok="@item.Jumlah">
+                                        @item.NamaUnit (@item.NoMaterial) - Sisa Stok: @item.Jumlah
+                                    </option>
+                                }
+                            }
+                        </datalist>
+                    </div>
+
+                    <div class="mb-3 p-3 bg-white border border-warning rounded shadow-sm">
+                        <label class="form-label fw-bold text-danger">MODE AUTOMATIC SCANNER (Aset / Ber-Serial Number)</label>
+                        <input type="text" class="form-control form-control-lg border-danger font-monospace" id="scanInputBarcode" placeholder="Barcode..." />
+                    </div>
+
+                    <div class="text-center my-2 text-muted fw-bold">--- ATAU ---</div>
+
+                    <div class="p-3 bg-white border border-primary rounded shadow-sm mb-3">
+                        <label class="form-label fw-bold text-primary">MODE INPUT MANUAL (Non-Asset / Kuantitas Banyak)</label>
+                        <div class="row g-2">
+                            <div class="col-8">
+                                <input type="text" class="form-control form-control-sm" id="manualBarcode" placeholder="Barcode / S/N (Jika ada)" />
+                            </div>
+                            <div class="col-4">
+                                <input type="number" class="form-control form-control-sm" id="manualQty" value="1" min="1" placeholder="Qty" />
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-primary btn-sm w-100 fw-bold mt-2" id="btnTambahManual">+ Tambahkan Manual ke Keranjang</button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-7">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Keranjang Pengeluaran Barang Sementara</h5>
+                    <span class="badge bg-white text-success fw-bold" id="cartBadgeCount">0 Item</span>
+                </div>
+                <div class="card-body p-0">
+                    
+                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                        <table class="table table-striped table-hover mb-0" id="tableKeranjang">
+                            <thead class="table-secondary position-sticky top-0">
+                                <tr>
+                                    <th class="ps-3">Nama Material</th>
+                                    <th>No Material</th>
+                                    <th class="text-center">Jml</th>
+                                    <th>Satuan</th>
+                                    <th>Barcode / S/N</th>
+                                    <th class="text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cartBody">
+                                </tbody>
+                        </table>
+                    </div>
+
+                    <div class="p-3 bg-light border-top d-flex justify-content-between">
+                        <a asp-controller="TugasanDinas" asp-action="Details" asp-route-id="@ViewBag.TugasanDinasId" class="btn btn-outline-secondary">Batal</a>
+                        
+                        <form asp-action="Create" method="post" id="mainFormPOS">
+                            <input type="hidden" name="TugasanDinasId" value="@ViewBag.TugasanDinasId" />
+                            <input type="hidden" name="itemsJson" id="hiddenItemsJson" />
+                            
+                            <button type="submit" class="btn btn-success btn-lg fw-bold px-5 shadow" id="btnSimpanSemua" disabled>
+                                Simpan & Masukkan Semua Barang
+                            </button>
+                        </form>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            let keranjang = [];
+
+            const selectMaterial = document.getElementById('scanSelectMaterial');
+            const scanInputBarcode = document.getElementById('scanInputBarcode');
+            const manualBarcode = document.getElementById('manualBarcode');
+            const manualQty = document.getElementById('manualQty');
+            const btnTambahManual = document.getElementById('btnTambahManual');
+            const cartBody = document.getElementById('cartBody');
+            const cartBadgeCount = document.getElementById('cartBadgeCount');
+            const btnSimpanSemua = document.getElementById('btnSimpanSemua');
+            const hiddenItemsJson = document.getElementById('hiddenItemsJson');
+            const mainFormPOS = document.getElementById('mainFormPOS');
+
+            function hitungQtyDiKeranjang(noMaterial) {
+                return keranjang
+                    .filter(item => item.NoMaterial === noMaterial)
+                    .reduce((sum, item) => sum + item.JumlahBawa, 0);
+            }
+
+            function renderKeranjang() {
+                cartBody.innerHTML = '';
+                if (keranjang.length === 0) {
+                    cartBody.innerHTML = `<tr><td colspan="6" class="text-center text-muted fst-italic py-4">Keranjang belanja kosong. Silakan pilih material dan scan barcode.</td></tr>`;
+                    btnSimpanSemua.disabled = true;
+                    cartBadgeCount.innerText = "0 Item";
+                    return;
+                }
+
+                btnSimpanSemua.disabled = false;
+                cartBadgeCount.innerText = `${keranjang.length} Item`;
+
+                keranjang.forEach((item, index) => {
+                    let row = `
+                        <tr>
+                            <td class="ps-3 fw-bold">${item.NamaUnit}</td>
+                            <td><span class="badge bg-dark">${item.NoMaterial}</span></td>
+                            <td class="text-center fw-bold text-primary">${item.JumlahBawa}</td>
+                            <td>${item.STN}</td>
+                            <td><span class="font-monospace text-danger fw-bold">${item.Barcode || '-'}</span></td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-sm btn-outline-danger btn-hapus-item" data-index="${index}">Hapus</button>
+                            </td>
+                        </tr>
+                    `;
+                    cartBody.insertAdjacentHTML('beforeend', row);
+                });
+
+                document.querySelectorAll('.btn-hapus-item').forEach(button => {
+                    button.addEventListener('click', function() {
+                        let idx = this.getAttribute('data-index');
+                        keranjang.splice(idx, 1);
+                        renderKeranjang();
+                    });
+                });
+            }
+
+            // --- WORKFLOW 1: AUTOMATIC BARCODE SCANNING ---
+            scanInputBarcode.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+
+                    // Penyesuaian cara membaca data dari datalist berdasarkan teks yang diketik
+                    let inputValue = selectMaterial.value.trim();
+                    let selectedOption = document.querySelector(`#materialDatalist option[value="${inputValue}"]`);
+
+                    if (!selectedOption) {
+                        alert("PERINGATAN: Silakan pilih atau ketik Material Utama yang valid dari daftar terlebih dahulu!");
+                        scanInputBarcode.value = '';
+                        selectMaterial.focus();
+                        return;
+                    }
+
+                    let barcodeValue = scanInputBarcode.value.trim();
+                    if (barcodeValue === "") return;
+
+                    let stokMaksimal = parseInt(selectedOption.getAttribute('data-stok')) || 0;
+                    let qtySekarang = hitungQtyDiKeranjang(inputValue);
+
+                    if (qtySekarang + 1 > stokMaksimal) {
+                        alert(`GAGAL SCAN: Stok untuk "${selectedOption.getAttribute('data-nama')}" tidak mencukupi!\nStok Gudang: ${stokMaksimal}\nJumlah di Keranjang: ${qtySekarang}`);
+                        scanInputBarcode.value = '';
+                        return;
+                    }
+
+                    keranjang.push({
+                        NoMaterial: inputValue,
+                        NamaUnit: selectedOption.getAttribute('data-nama'),
+                        KategoriAsset: selectedOption.getAttribute('data-kategori'),
+                        JumlahBawa: 1,
+                        STN: selectedOption.getAttribute('data-stn'),
+                        Barcode: barcodeValue
+                    });
+
+                    scanInputBarcode.value = '';
+                    renderKeranjang();
+                    scanInputBarcode.focus();
+                }
+            });
+
+            // --- WORKFLOW 2: INPUT MANUAL TAMBAH BARANG ---
+            btnTambahManual.addEventListener('click', function() {
+                let inputValue = selectMaterial.value.trim();
+                let selectedOption = document.querySelector(`#materialDatalist option[value="${inputValue}"]`);
+
+                if (!selectedOption) {
+                    alert("Silakan pilih atau ketik material yang valid dari daftar terlebih dahulu!");
+                    selectMaterial.focus();
+                    return;
+                }
+
+                let qtyInput = parseInt(manualQty.value) || 1;
+                
+                let stokMaksimal = parseInt(selectedOption.getAttribute('data-stok')) || 0;
+                let qtySekarang = hitungQtyDiKeranjang(inputValue);
+
+                if (qtySekarang + qtyInput > stokMaksimal) {
+                    alert(`GAGAL INPUT: Jumlah pengeluaran melebihi sisa stok gudang!\nStok Gudang: ${stokMaksimal}\nSudah di Keranjang: ${qty釋迦rang}\nAnda mencoba menambah: ${qtyInput}`);
+                    return;
+                }
+
+                keranjang.push({
+                    NoMaterial: inputValue,
+                    NamaUnit: selectedOption.getAttribute('data-nama'),
+                    KategoriAsset: selectedOption.getAttribute('data-kategori'),
+                    JumlahBawa: qtyInput,
+                    STN: selectedOption.getAttribute('data-stn'),
+                    Barcode: manualBarcode.value.trim()
+                });
+
+                manualBarcode.value = '';
+                manualQty.value = '1';
+                renderKeranjang();
+            });
+
+            mainFormPOS.addEventListener('submit', function() {
+                hiddenItemsJson.value = JSON.stringify(keranjang);
+            });
+
+            renderKeranjang();
+        });
+    </script>
+}

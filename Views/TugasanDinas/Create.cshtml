@@ -1,0 +1,340 @@
+@model BarangKeluarDinas.Models.TugasanDinas
+
+@{
+    ViewData["Title"] = "Tambah Tugasan Dinas";
+    var materialList = ViewBag.MaterialList as List<BarangKeluarDinas.Models.MasterMaterial>;
+}
+
+<div class="container mt-4">
+    <h2>Tambah Tugasan Dinas Baru</h2>
+    <hr />
+
+    <form asp-action="Create" method="post" id="mainFormTerpadu">
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+        <input type="hidden" name="itemsJson" id="hiddenItemsJson" />
+
+        <div class="row">
+            <div class="col-md-5">
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-primary text-white fw-bold">
+                        Informasi Penugasan
+                    </div>
+                    <div class="card-body bg-light">
+                        <div class="form-group mb-3">
+                            <label asp-for="PIC" class="control-label fw-bold text-secondary">Person In Charge (PIC)</label>
+                            <select asp-for="PIC" class="form-select border-secondary" asp-items="ViewBag.PICList" required>
+                                <option value="">-- Pilih Anggota Tim IT --</option>
+                            </select>
+                            <span asp-validation-for="PIC" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="Jobdesk" class="control-label fw-bold text-secondary">Jobdesk / Perintah Tugas</label>
+                            <input asp-for="Jobdesk" class="form-control border-secondary" placeholder="Contoh: Maintenance link pos KM 25 Siak" required />
+                            <span asp-validation-for="Jobdesk" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="LokasiDinas" class="control-label fw-bold text-secondary">Lokasi Dinas / Tujuan</label>
+                            <select asp-for="LokasiDinas" class="form-select border-secondary" asp-items="ViewBag.LokasiList" required>
+                                <option value="">-- Pilih Lokasi Site --</option>
+                            </select>
+                            <span asp-validation-for="LokasiDinas" class="text-danger"></span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 form-group mb-3">
+                                <label asp-for="TanggalDari" class="control-label fw-bold text-secondary">Dari Tanggal</label>
+                                <input asp-for="TanggalDari" type="date" class="form-control border-secondary" required />
+                                <span asp-validation-for="TanggalDari" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 form-group mb-3">
+                                <label asp-for="TanggalKe" class="control-label fw-bold text-secondary">Sampai Tanggal</label>
+                                <input asp-for="TanggalKe" type="date" class="form-control border-secondary" required />
+                                <span asp-validation-for="TanggalKe" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="form-group form-check mb-2 mt-2">
+                            <label class="form-check-label fw-bold text-dark fs-5">
+                                <input class="form-check-input border-dark" asp-for="BawaBarang" id="checkboxBawaBarang" /> Membawa Barang Bawaan Lapangan
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-7" id="panelGudangKasir" style="transition: opacity 0.3s ease;">
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-dark text-white fw-bold">
+                        Sistem Pemindaian Material Gudang IT
+                    </div>
+                    <div class="card-body bg-light">
+                        
+                        <fieldset id="fieldsetGudangKasir">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold text-secondary">Pilih Material Utama</label>
+                                <input type="text" class="form-control border-dark" id="scanSelectMaterial" list="materialDatalist" placeholder="Ketik nama atau nomor urut material..." />
+                                <datalist id="materialDatalist">
+                                    @if(materialList != null)
+                                    {
+                                        foreach(var item in materialList.Where(m => m.Status == "Y"))
+                                        {
+                                            <option value="@item.NoMaterial" data-nama="@item.NamaUnit" data-stn="@item.Satuan" data-stok="@item.Jumlah">
+                                                @item.NamaUnit (@item.NoMaterial) - Stok: @item.Jumlah
+                                            </option>
+                                        }
+                                    }
+                                </datalist>
+                            </div>
+
+                            <div class="row g-2 mb-3">
+                                <div class="col-md-3">
+                                    <label class="form-label small fw-bold text-primary">Jumlah Bawa</label>
+                                    <input type="number" class="form-control border-primary text-center fw-bold fs-5" id="manualQty" value="1" min="1" max="50" />
+                                </div>
+                                <div class="col-md-9">
+                                    <label class="form-label small fw-bold text-danger d-flex align-items-center gap-2">
+                                        Barcode / Serial Number Fisik
+                                        <span class="badge bg-danger text-white rounded-pill px-2 py-1 shadow-sm" title="Terintegrasi dengan alat Barcode Scanner">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-upc-scan mb-1" viewBox="0 0 16 16">
+                                                <path d="M1.5 1a.5.5 0 0 0-.5.5v3a.5.5 0 0 1-1 0v-3A1.5 1.5 0 0 1 1.5 0h3a.5.5 0 0 1 0 1zM11 .5a.5.5 0 0 1 .5-.5h3A1.5 1.5 0 0 1 16 1.5v3a.5.5 0 0 1-1 0v-3a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 1-.5-.5M.5 11a.5.5 0 0 1 .5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 1 0 1h-3A1.5 1.5 0 0 1 0 14.5v-3a.5.5 0 0 1 .5-.5m15 0a.5.5 0 0 1 .5.5v3a1.5 1.5 0 0 1-1.5 1.5h-3a.5.5 0 0 1 0-1h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 1 .5-.5M3 4.5a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0zm2 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0zm2 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0zm2 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm3 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0z"/>
+                                            </svg> Auto-Scan
+                                        </span>
+                                    </label>
+                                    <div id="barcodeInputsContainer">
+                                        </div>
+                                    <small class="text-muted" style="font-size: 0.75rem;">*Kosongkan kotak yang tidak berserial number (cth: kabel/baut).</small>
+                                </div>
+                            </div>
+                            
+                            <button type="button" class="btn btn-outline-dark btn-sm w-100 fw-bold mb-4" id="btnTambahItem">Masukkan ke Tabel Bawaan</button>
+
+                            <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
+                                <table class="table table-sm table-striped table-hover bg-white border">
+                                    <thead class="table-secondary position-sticky top-0">
+                                        <tr>
+                                            <th>Material</th>
+                                            <th class="text-center">Kuantitas</th>
+                                            <th>Barcode</th>
+                                            <th class="text-center">Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="cartBody">
+                                        </tbody>
+                                </table>
+                            </div>
+                        </fieldset>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0 mb-5">
+            <div class="card-body bg-white d-flex justify-content-end gap-2">
+                <a asp-action="Index" class="btn btn-outline-secondary px-4">Batal</a>
+                <button type="submit" class="btn btn-primary px-5 fw-bold shadow">Proses & Simpan Data Dinas</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            let keranjang = [];
+
+            const checkboxBawaBarang = document.getElementById('checkboxBawaBarang');
+            const panelGudangKasir = document.getElementById('panelGudangKasir');
+            const fieldsetGudangKasir = document.getElementById('fieldsetGudangKasir');
+            
+            const selectMaterial = document.getElementById('scanSelectMaterial');
+            const manualQty = document.getElementById('manualQty');
+            const barcodeInputsContainer = document.getElementById('barcodeInputsContainer');
+            const btnTambahItem = document.getElementById('btnTambahItem');
+            
+            const cartBody = document.getElementById('cartBody');
+            const hiddenItemsJson = document.getElementById('hiddenItemsJson');
+            const mainFormTerpadu = document.getElementById('mainFormTerpadu');
+
+            function fungsionalPanel() {
+                if (checkboxBawaBarang.checked) {
+                    // Nyalakan panel (Hapus efek redup dan buka gembok)
+                    panelGudangKasir.classList.remove('opacity-50');
+                    fieldsetGudangKasir.disabled = false;
+                } else {
+                    // Matikan panel (Redupkan dan kunci gembok)
+                    panelGudangKasir.classList.add('opacity-50');
+                    fieldsetGudangKasir.disabled = true;
+                    
+                    // Bersihkan seluruh data keranjang agar tidak terkirim tanpa sengaja
+                    keranjang = [];
+                    renderKeranjang();
+                    selectMaterial.value = '';
+                    manualQty.value = '1';
+                    renderBarcodeInputs();
+                }
+            }
+            checkboxBawaBarang.addEventListener('change', fungsionalPanel);
+            fungsionalPanel();
+
+            function hitungQtyDiKeranjang(noMaterial) {
+                return keranjang
+                    .filter(item => item.NoMaterial === noMaterial)
+                    .reduce((sum, item) => sum + item.JumlahBawa, 0);
+            }
+
+            // ==========================================
+            // LOGIKA PEMBUATAN KOTAK BARCODE DINAMIS DENGAN IKON
+            // ==========================================
+            function renderBarcodeInputs() {
+                let qty = parseInt(manualQty.value) || 1;
+                if (qty < 1) { qty = 1; manualQty.value = 1; }
+                if (qty > 30) { alert("Maksimal 30 unit sekali input untuk mencegah form terlalu panjang."); qty = 30; manualQty.value = 30; }
+
+                let currentInputs = document.querySelectorAll('.barcode-input');
+                let savedValues = [];
+                currentInputs.forEach(input => savedValues.push(input.value));
+
+                barcodeInputsContainer.innerHTML = '';
+                for (let i = 0; i < qty; i++) {
+                    let val = savedValues[i] || '';
+                    let inputHTML = `
+                        <div class="input-group mb-2 shadow-sm">
+                            <span class="input-group-text bg-white border-danger text-danger">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-upc-scan" viewBox="0 0 16 16">
+                                    <path d="M1.5 1a.5.5 0 0 0-.5.5v3a.5.5 0 0 1-1 0v-3A1.5 1.5 0 0 1 1.5 0h3a.5.5 0 0 1 0 1zM11 .5a.5.5 0 0 1 .5-.5h3A1.5 1.5 0 0 1 16 1.5v3a.5.5 0 0 1-1 0v-3a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 1-.5-.5M.5 11a.5.5 0 0 1 .5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 1 0 1h-3A1.5 1.5 0 0 1 0 14.5v-3a.5.5 0 0 1 .5-.5m15 0a.5.5 0 0 1 .5.5v3a1.5 1.5 0 0 1-1.5 1.5h-3a.5.5 0 0 1 0-1h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 1 .5-.5M3 4.5a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0zm2 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0zm2 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0zm2 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm3 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0z"/>
+                                </svg>
+                            </span>
+                            <input type="text" class="form-control font-monospace border-danger barcode-input" placeholder="Tembak S/N unit ke-${i+1}..." value="${val}" autocomplete="off" />
+                        </div>
+                    `;
+                    barcodeInputsContainer.insertAdjacentHTML('beforeend', inputHTML);
+                }
+
+                let newInputs = document.querySelectorAll('.barcode-input');
+                newInputs.forEach((input, index) => {
+                    input.addEventListener('keydown', function(e) {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            if (index < newInputs.length - 1) {
+                                newInputs[index + 1].focus();
+                            } else {
+                                tambahMaterialKeDaftar();
+                            }
+                        }
+                    });
+                });
+            }
+
+            manualQty.addEventListener('input', renderBarcodeInputs);
+            renderBarcodeInputs();
+
+
+            function renderKeranjang() {
+                cartBody.innerHTML = '';
+                if (keranjang.length === 0) {
+                    cartBody.innerHTML = `<tr><td colspan="4" class="text-center text-muted fst-italic py-3">Belum ada material yang dimasukkan ke daftar bawaan tugas ini.</td></tr>`;
+                    return;
+                }
+
+                keranjang.forEach((item, index) => {
+                    let row = `
+                        <tr>
+                            <td class="align-middle small fw-bold">${item.NamaUnit}<br><span class="text-muted font-monospace" style="font-size:0.75rem;">${item.NoMaterial}</span></td>
+                            <td class="text-center align-middle fw-bold text-primary">${item.JumlahBawa} ${item.STN}</td>
+                            <td class="align-middle font-monospace small">${item.Barcode || '-'}</td>
+                            <td class="text-center align-middle">
+                                <button type="button" class="btn btn-sm btn-link text-danger btn-hapus-item" data-index="${index}">Hapus</button>
+                            </td>
+                        </tr>
+                    `;
+                    cartBody.insertAdjacentHTML('beforeend', row);
+                });
+
+                document.querySelectorAll('.btn-hapus-item').forEach(button => {
+                    button.addEventListener('click', function() {
+                        let idx = this.getAttribute('data-index');
+                        keranjang.splice(idx, 1);
+                        renderKeranjang();
+                    });
+                });
+            }
+
+            function tambahMaterialKeDaftar() {
+                let inputValue = selectMaterial.value.trim();
+                let selectedOption = document.querySelector(`#materialDatalist option[value="${inputValue}"]`);
+
+                if (!selectedOption) {
+                    alert("Silakan pilih material utama yang valid dari daftar terlebih dahulu.");
+                    selectMaterial.focus();
+                    return;
+                }
+
+                let qtyInput = parseInt(manualQty.value) || 1;
+                let stokMaksimal = parseInt(selectedOption.getAttribute('data-stok')) || 0;
+                let qtySekarang = hitungQtyDiKeranjang(inputValue);
+
+                if (qtySekarang + qtyInput > stokMaksimal) {
+                    alert(`Gagal menambah barang: Kuantitas melebihi sisa stok gudang.\nStok Gudang: ${stokMaksimal}\nSudah di Keranjang: ${qtySekarang}`);
+                    return;
+                }
+
+                let newInputs = document.querySelectorAll('.barcode-input');
+                let jumlahTanpaBarcode = 0;
+
+                newInputs.forEach(input => {
+                    let bc = input.value.trim();
+                    if (bc !== "") {
+                        let isDuplicate = keranjang.some(item => item.Barcode === bc);
+                        if (isDuplicate) {
+                            alert(`PERINGATAN: S/N "${bc}" sudah ada di keranjang dan akan dilewati.`);
+                        } else {
+                            keranjang.push({
+                                NoMaterial: inputValue,
+                                NamaUnit: selectedOption.getAttribute('data-nama'),
+                                KategoriAsset: selectedOption.getAttribute('data-kategori'),
+                                JumlahBawa: 1, 
+                                STN: selectedOption.getAttribute('data-stn'),
+                                Barcode: bc
+                            });
+                        }
+                    } else {
+                        jumlahTanpaBarcode++;
+                    }
+                });
+
+                if (jumlahTanpaBarcode > 0) {
+                    let existingItem = keranjang.find(item => item.NoMaterial === inputValue && !item.Barcode);
+                    if (existingItem) {
+                        existingItem.JumlahBawa += jumlahTanpaBarcode;
+                    } else {
+                        keranjang.push({
+                            NoMaterial: inputValue,
+                            NamaUnit: selectedOption.getAttribute('data-nama'),
+                            KategoriAsset: selectedOption.getAttribute('data-kategori'),
+                            JumlahBawa: jumlahTanpaBarcode,
+                            STN: selectedOption.getAttribute('data-stn'),
+                            Barcode: null
+                        });
+                    }
+                }
+
+                selectMaterial.value = '';
+                manualQty.value = '1';
+                renderBarcodeInputs();
+                renderKeranjang();
+                selectMaterial.focus();
+            }
+
+            btnTambahItem.addEventListener('click', tambahMaterialKeDaftar);
+
+            mainFormTerpadu.addEventListener('submit', function() {
+                hiddenItemsJson.value = JSON.stringify(keranjang);
+            });
+        });
+    </script>
+}

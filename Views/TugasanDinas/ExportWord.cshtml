@@ -1,0 +1,148 @@
+@model BarangKeluarDinas.Models.TugasanDinas
+
+@{
+    Layout = null; // Mematikan layout utama agar navigasi web tidak ikut ter-export
+}
+
+<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head>
+    <meta charset="utf-8">
+    <title>Laporan Tugas Dinas</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            font-size: 10pt;
+            color: #000;
+            line-height: 1.2;
+        }
+        h2 { text-align: center; margin-bottom: 2px; font-size: 14pt; }
+        h4 { text-align: center; margin-top: 0; font-size: 11pt; font-weight: normal; margin-bottom: 15px; }
+        
+        /* Merapatkan Tabel Informasi Atas */
+        .table-info { width: 100%; border: none; margin-bottom: 10px; }
+        .table-info td { padding: 2px; vertical-align: top; }
+        .col-label { width: 22%; font-weight: bold; }
+        .col-titik { width: 2%; text-align: center; }
+        
+        /* Merapatkan Tabel Data Barang */
+        .table-data { width: 100%; border-collapse: collapse; margin-top: 5px; }
+        .table-data th, .table-data td { border: 1px solid #000; padding: 6px 4px; }
+        .table-data th { background-color: #e0e0e0; font-weight: bold; text-align: center; }
+        
+        .text-center { text-align: center; }
+        .fw-bold { font-weight: bold; }
+        .mt-4 { margin-top: 25px; }
+        
+        /* Memaksa margin halaman di Word menjadi lebih tipis (1.5cm) */
+        @@page { size: A4 portrait; margin: 1.5cm; }
+    </style>
+</head>
+<body>
+
+    <h2>LAPORAN PENUGASAN DINAS & PENGELUARAN BARANG</h2>
+    <h4>Departemen IT Infrastruktur</h4>
+    <hr style="border: 1px solid black; margin-bottom: 15px;" />
+
+    <table class="table-info">
+        <tr>
+            <td class="col-label">Nama PIC / Teknisi</td>
+            <td class="col-titik">:</td>
+            <td class="fw-bold">@Model.PIC</td>
+        </tr>
+        <tr>
+            <td class="col-label">Lokasi Tujuan</td>
+            <td class="col-titik">:</td>
+            <td>@Model.LokasiDinas</td>
+        </tr>
+        <tr>
+            <td class="col-label">Tanggal Penugasan</td>
+            <td class="col-titik">:</td>
+            <td>@Model.TanggalDari.ToString("dd MMM yyyy") - @Model.TanggalKe.ToString("dd MMM yyyy")</td>
+        </tr>
+        <tr>
+            <td class="col-label">Deskripsi Pekerjaan</td>
+            <td class="col-titik">:</td>
+            <td style="white-space: pre-line;">@Model.Jobdesk</td>
+        </tr>
+    </table>
+
+    <p class="fw-bold" style="margin-bottom: 5px;">Rincian Material Logistik:</p>
+
+    <table class="table-data">
+        <thead>
+            <tr>
+                <th style="width: 5%;">No</th>
+                <th style="width: 30%;">Spesifikasi Material</th>
+                <th style="width: 10%;">Qty</th>
+                <th style="width: 20%;">Barcode / S/N</th>
+                <th style="width: 10%;">Status</th>
+                <th style="width: 25%;">Catatan Lapangan</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.SenaraiBarang != null && Model.SenaraiBarang.Any())
+            {
+                int no = 1;
+                foreach (var barang in Model.SenaraiBarang)
+                {
+                    <tr>
+                        <td class="text-center" style="vertical-align: middle;">@no</td>
+                        <td style="vertical-align: middle;">
+                            <span class="fw-bold">@barang.NamaUnit</span><br />
+                            <span style="font-size: 8pt; color: #444;">No Mat: @barang.NoMaterial</span>
+                        </td>
+                        <td class="text-center" style="vertical-align: middle; font-weight: bold;">@barang.JumlahBawa @barang.STN</td>
+                        <td class="text-center" style="vertical-align: middle;">@(string.IsNullOrEmpty(barang.Barcode) ? "-" : barang.Barcode)</td>
+                        
+                        <td class="text-center" style="vertical-align: middle;">
+                            @if(barang.Status == BarangKeluarDinas.Models.StatusAliranBarang.DibawaKeluar) {
+                                <span>Pending</span>
+                            } else if (barang.Status == BarangKeluarDinas.Models.StatusAliranBarang.TerpakaiKategoriSRM) {
+                                <span>Terpakai</span>
+                            } else {
+                                <span>Kembali</span>
+                            }
+                        </td>
+                        
+                        <td style="font-size: 9pt; vertical-align: middle;">
+                            @if(!string.IsNullOrEmpty(barang.SRM)) { <div>SRM: @barang.SRM</div> }
+                            @if(!string.IsNullOrEmpty(barang.Keterangan)) { <div>Ket: @barang.Keterangan</div> }
+                        </td>
+                    </tr>
+                    no++;
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="6" class="text-center" style="padding: 15px 0;">Tidak ada material yang dikeluarkan untuk tugas ini.</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <div style="margin-top: 20px; padding: 10px; border: 1px solid #000; background-color: #f9f9f9; font-size: 8.5pt; line-height: 1.4;">
+        <strong>PERNYATAAN TANGGUNG JAWAB PIC / TEKNISI:</strong>
+        <ol style="margin-top: 5px; margin-bottom: 0; padding-left: 20px; color: #000;">
+            <li>Seluruh material logistik yang dikeluarkan menjadi tanggung jawab penuh PIC selama masa dinas berlangsung. Segala bentuk kerusakan atau kehilangan barang akibat kelalaian di lapangan akan menjadi tanggung jawab penuh PIC pribadi sesuai dengan ketetapan regulasi internal manajemen IT.</li>
+            <li>Setiap material bawaan yang <strong>tidak digunakan atau tidak terpasang (sisa)</strong> di lokasi penugasan site tujuan, <strong>WAJIB dibawa kembali</strong> dan diserahkan langsung ke pihak Gudang IT dalam kondisi utuh segera setelah kembali dari penugasan.</li>
+        </ol>
+    </div>
+
+    <table class="table-info mt-4" style="width: 100%; text-align: center;">
+        <tr>
+            <td style="width: 50%;">
+                Mengetahui,<br /><br /><br /><br />
+                (_______________________)<br />
+                <strong>Admin Gudang IT</strong>
+            </td>
+            <td style="width: 50%;">
+                Diterima & Dikerjakan Oleh,<br /><br /><br /><br />
+                (_______________________)<br />
+                <strong>@Model.PIC</strong>
+            </td>
+        </tr>
+    </table>
+
+</body>
+</html>

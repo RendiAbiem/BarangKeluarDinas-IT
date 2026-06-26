@@ -1,0 +1,177 @@
+@model BarangKeluarDinas.Models.ItemBarangKeluar
+
+@{
+    ViewData["Title"] = "Update Status Barang";
+}
+
+<!-- Batasan max-width dihapus agar tampilan melebar -->
+<div class="container mt-4">
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-dark text-white fw-bold py-3">
+            <h5 class="mb-0">Form Pelaporan Pemakaian Barang</h5>
+        </div>
+        <div class="card-body bg-light p-4">
+            
+            <!-- Panel Informasi Spesifikasi Barang Utama -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body bg-white rounded border-start border-info border-4">
+                    <div class="row text-center text-md-start g-3">
+                        <div class="col-md-5">
+                            <small class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.75rem; letter-spacing: 0.5px;">Material / Unit</small>
+                            <span class="fw-bold text-dark fs-6">@Model.NamaUnit</span>
+                            <span class="d-block small text-secondary font-monospace">@Model.NoMaterial</span>
+                        </div>
+                        <div class="col-md-3 border-md-start">
+                            <small class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.75rem; letter-spacing: 0.5px;">Kuantitas Bawa</small>
+                            <span class="fw-bold text-primary fs-5">@Model.JumlahBawa</span>
+                            <span class="text-secondary small">@Model.STN</span>
+                        </div>
+                        <div class="col-md-4 border-md-start">
+                            <small class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.75rem; letter-spacing: 0.5px;">Serial Number / Barcode</small>
+                            <span class="font-monospace text-dark fw-bold bg-light px-2 py-1 rounded border d-inline-block mt-1 small">
+                                @(string.IsNullOrEmpty(Model.Barcode) ? "Tidak Ada S/N" : Model.Barcode)
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <form asp-action="UpdatePengembalian" method="post">
+                <!-- Hidden fields wajib untuk mempertahankan context data binding EF Core -->
+                <input type="hidden" asp-for="Id" />
+                <input type="hidden" asp-for="TugasanDinasId" />
+                <input type="hidden" asp-for="NoMaterial" />
+                <input type="hidden" asp-for="NamaUnit" />
+                <input type="hidden" asp-for="KategoriAsset" />
+                <input type="hidden" asp-for="STN" />
+                <input type="hidden" asp-for="Barcode" />
+                <input type="hidden" asp-for="JumlahBawa" />
+
+                <!-- Bagian 1: Penentuan Status Utama -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body bg-white rounded">
+                        <div class="form-group">
+                            <label asp-for="Status" class="form-label fw-bold text-secondary text-uppercase small" style="letter-spacing: 0.5px;">1. Pilih Status Akhir Aliran Barang</label>
+                            <select asp-for="Status" class="form-select form-select-lg border-secondary shadow-sm" id="selectStatus">
+                                <option value="DibawaKeluar">Masih Dibawa (Pending / Belum Digunakan)</option>
+                                <option value="TerpakaiKategoriSRM">Terpakai di Lapangan (Instalasi / Sesuai SRM)</option>
+                                <option value="KembaliGudangIT">Kembali ke Gudang IT (Utuh / Tidak Terpakai)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bagian 2: Fitur Pemecahan Kuantitas (Auto-Split) -->
+                @if (Model.JumlahBawa > 1)
+                {
+                    <div class="card border-0 shadow-sm mb-4 bg-white" id="divAutoSplit" style="display: none;">
+                        <div class="card-body border-start border-primary border-4 rounded">
+                            <label class="form-label fw-bold text-primary text-uppercase small" style="letter-spacing: 0.5px;">Opsi Pemecahan Jumlah (Auto-Split)</label>
+                            <p class="small text-muted mb-3">Jika tidak semua dari total <strong>@Model.JumlahBawa @Model.STN</strong> material ini terpakai di lapangan, tentukan jumlah sisa yang ingin dikembalikan utuh ke dalam stok gudang IT.</p>
+                            
+                            <!-- Batasan max-width pada kotak input ini dipertahankan agar tidak membentang penuh dari kiri ke kanan -->
+                            <div class="input-group shadow-sm" style="max-width: 320px;">
+                                <span class="input-group-text bg-light text-dark fw-semibold">Jumlah Sisa Kembali:</span>
+                                <input type="number" name="sisaKembali" id="inputSisaKembali" class="form-control text-center fw-bold fs-5" value="0" min="0" max="@(Model.JumlahBawa - 1)" />
+                                <span class="input-group-text bg-light fw-bold">@Model.STN</span>
+                            </div>
+                            <div class="form-text text-danger fw-bold mt-2" id="splitWarning"></div>
+                        </div>
+                    </div>
+                }
+
+                <!-- Bagian 3: Dokumen Logistik Lapangan (Dinamis via JavaScript) -->
+                <div id="divDetailPemakaian" style="display: none;">
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-header bg-secondary text-white fw-bold small text-uppercase py-2" style="letter-spacing: 0.5px;">
+                            Detail Registrasi Lapangan (Dokumen Audit)
+                        </div>
+                        <div class="card-body bg-white rounded-bottom">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label asp-for="SRM" class="form-label fw-bold text-muted small">Nomor Tiket SRM</label>
+                                    <input asp-for="SRM" class="form-control border-secondary" placeholder="Mewarisi data utama jika dikosongkan..." />
+                                    <span class="form-text text-muted small" style="font-size: 0.75rem;">Kosongkan jika ingin menyamakan dengan Nomor SRM Tugas Dinas.</span>
+                                </div>
+                                <div class="col-md-6">
+                                    <label asp-for="PK_GI" class="form-label fw-bold text-muted small">Nomor PK / Goods Issue (GI)</label>
+                                    <input asp-for="PK_GI" class="form-control border-secondary" placeholder="Contoh: 500176XXXX" />
+                                    <span class="form-text text-muted small" style="font-size: 0.75rem;">Bisa dikosongkan dahulu jika dokumen SAP belum terbit.</span>
+                                </div>
+                                <div class="col-md-12 mt-3">
+                                    <label asp-for="UnitLama" class="form-label fw-bold text-muted small">Keterangan / Spesifikasi Unit Lama Yang Diganti</label>
+                                    <textarea asp-for="UnitLama" class="form-control border-secondary" rows="3" placeholder="Tuliskan Serial Number (S/N) barang rusak yang ditarik dari lapangan atau alasan penggantian unit..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bagian 4: Catatan Riwayat Tambahan -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body bg-white rounded">
+                        <div class="form-group">
+                            <label asp-for="Keterangan" class="form-label fw-bold text-secondary text-uppercase small" style="letter-spacing: 0.5px;">Keterangan Tambahan / Catatan Admin</label>
+                            <textarea asp-for="Keterangan" class="form-control border-secondary" rows="2" placeholder="Tambahkan informasi pelengkap administrasi jika diperlukan..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tombol Aksi Akhir -->
+                <div class="d-flex justify-content-between align-items-center mt-4">
+                    <a asp-controller="TugasanDinas" asp-action="Details" asp-route-id="@Model.TugasanDinasId" class="btn btn-outline-secondary px-4 fw-bold">Kembali</a>
+                    <button type="submit" class="btn btn-warning text-dark px-5 fw-bold shadow-sm">Simpan Laporan Akhir</button>
+                </div>
+            </form>
+            
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const selectStatus = document.getElementById('selectStatus');
+            const divDetailPemakaian = document.getElementById('divDetailPemakaian');
+            const divAutoSplit = document.getElementById('divAutoSplit');
+            const inputSisaKembali = document.getElementById('inputSisaKembali');
+            const splitWarning = document.getElementById('splitWarning');
+            
+            const maxBawa = @Model.JumlahBawa;
+
+            function toggleSections() {
+                const statusVal = selectStatus.value;
+                
+                if (statusVal === 'TerpakaiKategoriSRM') {
+                    divDetailPemakaian.style.display = 'block';
+                    if (divAutoSplit) divAutoSplit.style.display = 'block';
+                } else {
+                    divDetailPemakaian.style.display = 'none';
+                    if (divAutoSplit) {
+                        divAutoSplit.style.display = 'none';
+                        inputSisaKembali.value = 0; 
+                        splitWarning.innerText = "";
+                    }
+                }
+            }
+
+            if (inputSisaKembali) {
+                inputSisaKembali.addEventListener('input', function() {
+                    let sisa = parseInt(this.value) || 0;
+                    
+                    if (sisa < 0) {
+                        this.value = 0;
+                    } else if (sisa >= maxBawa) {
+                        splitWarning.innerText = "Peringatan: Jumlah sisa kembali tidak boleh sama atau melebihi kuantitas bawaan awal. Jika barang tidak jadi digunakan sama sekali, silakan ubah status utama di atas menjadi 'Kembali ke Gudang IT'.";
+                        this.value = maxBawa - 1; 
+                    } else {
+                        splitWarning.innerText = ""; 
+                    }
+                });
+            }
+
+            selectStatus.addEventListener('change', toggleSections);
+            toggleSections(); 
+        });
+    </script>
+}

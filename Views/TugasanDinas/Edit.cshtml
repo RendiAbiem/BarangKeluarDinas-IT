@@ -1,0 +1,85 @@
+@model BarangKeluarDinas.Models.TugasanDinas
+
+@{
+    ViewData["Title"] = "Edit Tugasan Dinas";
+}
+
+<div class="container mt-4" style="max-width: 800px;">
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-warning text-dark fw-bold py-3">
+            <h5 class="mb-0">Edit Administrasi Tugas Dinas</h5>
+        </div>
+        <div class="card-body bg-light p-4">
+            
+            <form asp-action="Edit" method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                
+                <!-- Hidden Fields untuk mempertahankan identitas dan status asli -->
+                <input type="hidden" asp-for="Id" />
+                <input type="hidden" asp-for="BawaBarang" />
+
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <label asp-for="PIC" class="form-label fw-bold text-secondary">Person In Charge (PIC)</label>
+                        <select asp-for="PIC" class="form-select border-secondary shadow-sm" asp-items="ViewBag.PICList" required>
+                            <option value="">-- Pilih Anggota Tim IT --</option>
+                        </select>
+                        <span asp-validation-for="PIC" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="LokasiDinas" class="form-label fw-bold text-secondary">Lokasi Dinas / Tujuan</label>
+                        <select asp-for="LokasiDinas" class="form-select border-secondary shadow-sm" asp-items="ViewBag.LokasiList" required>
+                            <option value="">-- Pilih Lokasi Site --</option>
+                        </select>
+                        <span asp-validation-for="LokasiDinas" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-12">
+                        <label asp-for="Jobdesk" class="form-label fw-bold text-secondary">Jobdesk / Perintah Tugas</label>
+                        <input asp-for="Jobdesk" class="form-control border-secondary shadow-sm" placeholder="Contoh: Maintenance link pos KM 25 Siak" required />
+                        <span asp-validation-for="Jobdesk" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="TanggalDari" class="form-label fw-bold text-secondary">Dari Tanggal</label>
+                        <input asp-for="TanggalDari" type="date" class="form-control border-secondary shadow-sm" required />
+                        <span asp-validation-for="TanggalDari" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="TanggalKe" class="form-label fw-bold text-secondary">Sampai Tanggal</label>
+                        <input asp-for="TanggalKe" type="date" class="form-control border-secondary shadow-sm" required />
+                        <span asp-validation-for="TanggalKe" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <!-- Panel Status Bawa Barang (Read-Only) -->
+                <div class="mt-4 p-4 bg-white border border-info rounded shadow-sm">
+                    <label class="form-label fw-bold text-dark mb-2 text-uppercase small" style="letter-spacing: 0.5px;">Status Logistik Gudang</label>
+                    <div>
+                        @if (Model.BawaBarang)
+                        {
+                            <span class="badge bg-primary fs-6 px-3 py-2 shadow-sm">Ya, Membawa Material Gudang</span>
+                            <small class="d-block text-muted mt-2">Catatan: Mengubah, menambah, atau membatalkan material logistik yang dibawa harus dilakukan melalui <strong>Halaman Detail Laporan</strong>, bukan di form administrasi ini demi menjaga integritas stok.</small>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary fs-6 px-3 py-2 shadow-sm">Tidak Membawa Material</span>
+                        }
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mt-5">
+                    <a asp-action="Index" class="btn btn-outline-secondary px-4 fw-bold">Batal</a>
+                    <button type="submit" class="btn btn-warning text-dark px-5 fw-bold shadow">Simpan Perubahan</button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

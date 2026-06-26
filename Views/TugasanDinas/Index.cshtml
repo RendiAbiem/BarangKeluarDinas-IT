@@ -1,0 +1,89 @@
+@model IEnumerable<BarangKeluarDinas.Models.TugasanDinas>
+
+@{
+    ViewData["Title"] = "Daftar Tugasan Dinas";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Daftar Tugasan Dinas</h2>
+        <a asp-action="Create" class="btn btn-success fw-bold shadow-sm">+ Tambah Tugas Baru</a>
+    </div>
+
+    <div class="mb-3 d-flex gap-2">
+        <a asp-action="Index" class="btn btn-sm btn-outline-dark fw-bold @(ViewData["StatusFilter"] == null ? "active" : "")">Semua</a>
+        <a asp-action="Index" asp-route-statusFilter="BelumUpdate" class="btn btn-sm btn-outline-danger fw-bold @(ViewData["StatusFilter"]?.ToString() == "BelumUpdate" ? "active" : "")">Perlu Update</a>
+        <a asp-action="Index" asp-route-statusFilter="Selesai" class="btn btn-sm btn-outline-success fw-bold @(ViewData["StatusFilter"]?.ToString() == "Selesai" ? "active" : "")">Selesai</a>
+    </div>
+
+    <form asp-action="Index" method="get" class="mb-4">
+        <div class="input-group shadow-sm">
+            <input type="text" name="searchString" class="form-control" placeholder="Cari berdasarkan PIC, Jobdesk, atau Lokasi..." value="@ViewData["CurrentFilter"]" />
+            <input type="hidden" name="statusFilter" value="@ViewData["StatusFilter"]" /> 
+            <button type="submit" class="btn btn-primary fw-bold px-4">Cari</button>
+            @if (!string.IsNullOrEmpty(ViewData["CurrentFilter"]?.ToString()))
+            {
+                <a asp-action="Index" class="btn btn-outline-secondary px-3">Reset</a>
+            }
+        </div>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped table-hover shadow-sm bg-white">
+            <thead class="table-dark text-center align-middle">
+                <tr>
+                    <th>PIC</th>
+                    <th>Jobdesk</th>
+                    <th>Lokasi</th>
+                    <th>Tanggal</th>
+                    <th>Dokumen</th>
+                    <th>Status Barang</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Any())
+                {
+                    foreach (var item in Model) {
+                        var isPending = item.SenaraiBarang.Any(i => i.Status == BarangKeluarDinas.Models.StatusAliranBarang.DibawaKeluar);
+                        
+                        <tr class="@(isPending ? "table-warning" : "")">
+                            <td class="align-middle fw-bold">@item.PIC</td>
+                            <td class="align-middle small">@item.Jobdesk</td>
+                            <td class="align-middle">@item.LokasiDinas</td>
+                            <td class="align-middle text-center" style="min-width: 110px;">@item.TanggalDari.ToString("dd MMM yyyy")</td>
+                            
+                            <td class="align-middle text-center">
+                                <a asp-action="Preview" asp-route-id="@item.Id" target="_blank" class="btn btn-sm btn-outline-primary fw-bold py-1 px-3 shadow-sm">
+                                    Lihat
+                                </a>
+                            </td>
+
+                            <td class="align-middle text-center">
+                                @if(isPending) {
+                                    <span class="badge bg-danger px-2 py-1">Belum Update</span>
+                                } else {
+                                    <span class="badge bg-success px-2 py-1">Selesai</span>
+                                }
+                            </td>
+                            
+                            <td class="text-center align-middle" style="min-width: 190px;">
+                                <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-info text-white fw-bold shadow-sm">Detail</a> 
+                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning text-dark fw-bold ms-1 shadow-sm">Edit</a>
+                                <form asp-action="Delete" asp-route-id="@item.Id" method="post" class="d-inline" onsubmit="return confirm('Yakin ingin menghapus data penugasan dinas ini secara permanen?');">
+                                    <button type="submit" class="btn btn-sm btn-danger ms-1 fw-bold shadow-sm">Hapus</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="7" class="text-center text-muted fst-italic py-4">Data tugasan dinas belum tersedia.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,72 @@
+<!-- Views/TugasanDinas/_ModalTambahMaterial.cshtml -->
+@model BarangKeluarDinas.Models.TugasanDinas
+@{
+    var materialList = ViewBag.MaterialList as List<BarangKeluarDinas.Models.MasterMaterial>;
+}
+
+<div class="modal fade" id="modalTambahMaterial" tabindex="-1" aria-labelledby="modalTambahLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-success text-white fw-bold py-3">
+                <h5 class="modal-title" id="modalTambahLabel">+ Ambil Material Tambahan Gudang IT</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-action="TambahMaterialDetail" method="post" id="formTambahMaterialUtama">
+                <div class="modal-body bg-light p-4">
+                    <input type="hidden" name="tugasanId" value="@Model.Id" />
+                    <input type="hidden" name="itemsJson" id="addHiddenItemsJson" />
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-secondary">Pilih Material Tambahan</label>
+                        <input type="text" class="form-control border-dark" id="addSelectMaterial" list="addMaterialDatalist" placeholder="Ketik nama atau nomor urut material..." />
+                        <datalist id="addMaterialDatalist">
+                            @if(materialList != null)
+                            {
+                                foreach(var item in materialList.Where(m => m.Status == "Y"))
+                                {
+                                    <option value="@item.NoMaterial" data-nama="@item.NamaUnit" data-stn="@item.Satuan" data-stok="@item.Jumlah">
+                                        @item.NamaUnit (@item.NoMaterial) - Stok Gudang: @item.Jumlah
+                                    </option>
+                                }
+                            }
+                        </datalist>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold text-primary">Jumlah Bawa</label>
+                            <input type="number" class="form-control border-primary text-center fw-bold fs-5" id="addManualQty" value="1" min="1" max="30" />
+                        </div>
+                        <div class="col-md-9">
+                            <label class="form-label small fw-bold text-danger">Barcode / Serial Number Fisik</label>
+                            <div id="addBarcodeInputsContainer"></div>
+                            <small class="text-muted" style="font-size: 0.73rem;">*Kosongkan kolom jika jenis barang tidak memiliki S/N tunggal.</small>
+                        </div>
+                    </div>
+
+                    <button type="button" class="btn btn-outline-dark btn-sm w-100 fw-bold mb-4" id="addBtnTambahItem">Masukkan ke Keranjang Sementara</button>
+
+                    <div class="table-responsive" style="max-height: 200px; overflow-y: auto;">
+                        <table class="table table-sm table-striped table-hover bg-white border">
+                            <thead class="table-secondary position-sticky top-0">
+                                <tr>
+                                    <th>Material Baru</th>
+                                    <th class="text-center">Kuantitas</th>
+                                    <th>Barcode S/N</th>
+                                    <th class="text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="addCartBody">
+                                <tr><td colspan="4" class="text-center text-muted fst-italic py-3">Belum ada barang tambahan di keranjang.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer bg-white border-top">
+                    <button type="button" class="btn btn-outline-secondary px-4 fw-bold" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-success fw-bold px-5 shadow">Simpan & Ambil Barang</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

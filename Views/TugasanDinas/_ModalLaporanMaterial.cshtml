@@ -1,0 +1,126 @@
+<div class="modal fade" id="modalLaporanMaterial" tabindex="-1" aria-labelledby="modalLaporanLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-dark text-white fw-bold py-3">
+                <h5 class="modal-title" id="modalLaporanLabel">Form Pelaporan Pemakaian Barang</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <form asp-controller="ItemBarangKeluar" asp-action="UpdatePengembalian" method="post" id="formModalPelaporan">
+                <div class="modal-body bg-light p-4">
+                    <input type="hidden" name="Id" id="modalId" />
+                    <input type="hidden" name="TugasanDinasId" id="modalTugasanId" />
+                    <input type="hidden" name="NoMaterial" id="modalNoMaterial" />
+                    <input type="hidden" name="NamaUnit" id="modalNamaUnitValue" />
+                    <input type="hidden" name="KategoriAsset" id="modalKategoriAsset" />
+                    <input type="hidden" name="STN" id="modalSTN" />
+                    <input type="hidden" name="Barcode" id="modalBarcodeValue" />
+                    <input type="hidden" name="JumlahBawa" id="modalJumlahBawaValue" />
+
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-body bg-white rounded border-start border-info border-4">
+                            <div class="row text-center text-md-start g-3">
+                                <div class="col-md-5">
+                                    <small class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.75rem;">Material / Unit</small>
+                                    <span class="fw-bold text-dark fs-6" id="dispNamaUnit"></span>
+                                    <span class="d-block small text-secondary font-monospace" id="dispNoMaterial"></span>
+                                </div>
+                                <div class="col-md-3 border-md-start">
+                                    <small class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.75rem;">Kuantitas Bawa</small>
+                                    <span class="fw-bold text-primary fs-5" id="dispJumlahBawa"></span>
+                                    <span class="text-secondary small" id="dispSTN"></span>
+                                </div>
+                                <div class="col-md-4 border-md-start">
+                                    <small class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.75rem;">Serial Number / Barcode</small>
+                                    <span class="font-monospace text-dark fw-bold bg-light px-2 py-1 rounded border d-inline-block mt-1 small" id="dispBarcode"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-body bg-white rounded">
+                            <label class="form-label fw-bold text-secondary text-uppercase small mb-3">1. Pilih Status Akhir Aliran Barang</label>
+                            <div class="d-flex flex-column gap-2">
+                                <input type="radio" class="btn-check modal-status-radio" name="Status" id="statusPending" value="DibawaKeluar" autocomplete="off">
+                                <label class="btn btn-outline-info text-start fw-bold p-3 shadow-sm" for="statusPending">
+                                    Masih Dibawa (Pending / Belum Digunakan)
+                                </label>
+
+                                <input type="radio" class="btn-check modal-status-radio" name="Status" id="statusTerpakai" value="TerpakaiKategoriSRM" autocomplete="off">
+                                <label class="btn btn-outline-danger text-start fw-bold p-3 shadow-sm" for="statusTerpakai">
+                                    Terpakai di Lapangan (Instalasi / Sesuai SRM)
+                                </label>
+
+                                <input type="radio" class="btn-check modal-status-radio" name="Status" id="statusKembali" value="KembaliGudangIT" autocomplete="off">
+                                <label class="btn btn-outline-success text-start fw-bold p-3 shadow-sm" for="statusKembali">
+                                    Kembali ke Gudang IT (Utuh / Tidak Terpakai)
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card border-0 shadow-sm mb-4 bg-white" id="modalWrapperAutoSplit" style="display: none;">
+                        <div class="card-body border-start border-primary border-4 rounded">
+                            <label class="form-label fw-bold text-primary text-uppercase small">Opsi Pemecahan Jumlah (Auto-Split)</label>
+                            <p class="small text-muted mb-3">Jika tidak semua material terpakai, tentukan jumlah sisa yang dikembalikan utuh ke gudang.</p>
+                            <div class="input-group shadow-sm" style="max-width: 320px;">
+                                <span class="input-group-text bg-light text-dark fw-semibold">Jumlah Sisa Kembali:</span>
+                                <input type="number" name="sisaKembali" id="modalInputSisaKembali" class="form-control text-center fw-bold fs-5" value="0" min="0" />
+                                <span class="input-group-text bg-light fw-bold" id="dispSTN2"></span>
+                            </div>
+                            <div class="form-text text-danger fw-bold mt-2" id="modalSplitWarning"></div>
+                        </div>
+                    </div>
+
+                    <div class="card border-0 shadow-sm mb-4" id="modalDivTanggal" style="display: none;">
+                        <div class="card-body bg-white rounded border-start border-warning border-4">
+                            <label class="form-label fw-bold text-warning text-uppercase small mb-3" style="letter-spacing: 0.5px;">Waktu Logistik Aktual (Di Luar Jam Kerja)</label>
+                            <div class="row g-3">
+                                <div class="col-md-6" id="wrapTanggalPakai" style="display: none;">
+                                    <label class="form-label fw-bold text-muted small">Kapan material diinstalasi?</label>
+                                    <input type="datetime-local" name="TanggalDipakai" id="modalTanggalDipakai" class="form-control border-secondary shadow-sm" />
+                                </div>
+                                <div class="col-md-6" id="wrapTanggalKembali" style="display: none;">
+                                    <label class="form-label fw-bold text-muted small">Kapan sisa material dikembalikan?</label>
+                                    <input type="datetime-local" name="TanggalDikembalikan" id="modalTanggalKembali" class="form-control border-secondary shadow-sm" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="modalDivDetailPemakaian" style="display: none;">
+                        <div class="card border-0 shadow-sm mb-4">
+                            <div class="card-header bg-secondary text-white fw-bold small text-uppercase py-2">Detail Registrasi Lapangan (Dokumen Audit)</div>
+                            <div class="card-body bg-white rounded-bottom">
+                                <div class="row g-3">
+                                    <div class="col-md-12">
+                                        <label class="form-label fw-bold text-muted small">Nomor Tiket SRM</label>
+                                        <input type="text" name="SRM" id="modalSRM" class="form-control border-secondary" placeholder="Mewarisi data tiket SRM utama..." />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body bg-white rounded">
+                            <label class="form-label fw-bold text-secondary text-uppercase small">Keterangan Tambahan / Catatan Admin</label>
+                            <div class="mb-2 d-flex flex-wrap gap-2">
+                                <button type="button" class="btn btn-sm btn-outline-info fw-bold btn-quick-tag">Unit Normal / Baik</button>
+                                <button type="button" class="btn btn-sm btn-outline-danger fw-bold btn-quick-tag">Unit Rusak / Mati Total</button>
+                                <button type="button" class="btn btn-sm btn-outline-warning fw-bold btn-quick-tag">Hanya Spare / Cadangan</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary fw-bold btn-quick-tag">Salah Bawa / Retur</button>
+                            </div>
+                            <textarea name="Keterangan" id="modalKeterangan" class="form-control border-secondary mt-2" rows="2" placeholder="Klik tombol di atas atau ketik manual..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-white border-top">
+                    <button type="button" class="btn btn-outline-secondary px-4 fw-bold" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-warning text-dark px-5 fw-bold shadow-sm">Simpan Laporan Akhir</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
