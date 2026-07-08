@@ -1,0 +1,60 @@
+@using BarangKeluarDinas.Models
+
+<div class="card card-custom">
+    <div class="card-header bg-white border-bottom pt-4 pb-3">
+        <h6 class="m-0 fw-bolder text-dark text-uppercase" style="font-size: 0.85rem;">Audit Trail Logistik (100 Mutasi Terakhir)</h6>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive" style="max-height: 600px; overflow-y: auto;">
+            <table class="table table-hover table-striped table-modern align-middle mb-0 font-monospace text-dark">
+                <thead class="table-dark position-sticky top-0 shadow-sm" style="z-index: 1;">
+                    <tr>
+                        <th class="ps-4 text-white">WAKTU AKTIVITAS</th>
+                        <th class="text-white">NO MATERIAL</th>
+                        <th class="text-white">DESKRIPSI UNIT BARANG</th>
+                        <th class="text-white">AKTIVITAS MUTASI</th>
+                        <th class="text-center text-white">QTY</th>
+                        <th class="text-center text-white">SALDO</th>
+                        <th class="text-white">PLANT TIER</th>
+                        <th class="text-white">STORAGE LOC</th>
+                        <th class="pe-4 text-white">CATATAN AUDIT</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (ViewBag.ListHistory != null && ((List<HistoryMaterial>)ViewBag.ListHistory).Any())
+                    {
+                        foreach(var h in ViewBag.ListHistory) {
+                            <tr>
+                                <td class="ps-4 text-muted" style="font-size: 0.8rem;">@h.Tanggal.ToString("dd MMM yyyy HH:mm")</td>
+                                <td class="fw-bolder">@h.NoMaterial</td>
+                                <td class="fw-semibold text-wrap" style="max-width: 200px;">@h.NamaUnit</td>
+                                <td>
+                                    @if(h.JenisAktivitas.Contains("Datang") || h.JenisAktivitas.Contains("Inbound") || h.JenisAktivitas.Contains("Aktivasi")) {
+                                        <span class="text-success fw-bold">@h.JenisAktivitas</span>
+                                    } else if (h.JenisAktivitas.Contains("Dinas") || h.JenisAktivitas.Contains("Pinjam") || h.JenisAktivitas.Contains("Deaktivasi")) {
+                                        <span class="text-danger fw-bold">@h.JenisAktivitas</span>
+                                    } else if (h.JenisAktivitas.Contains("Rusak")) {
+                                        <span class="text-warning text-dark fw-bold">@h.JenisAktivitas</span>
+                                    } else {
+                                        <span class="text-primary fw-bold">@h.JenisAktivitas</span>
+                                    }
+                                </td>
+                                <td class="text-center fw-bolder @(h.PerubahanJumlah >= 0 ? "text-success" : "text-danger")" style="font-size: 0.9rem;">
+                                    @(h.PerubahanJumlah > 0 ? $"+{h.PerubahanJumlah}" : h.PerubahanJumlah.ToString())
+                                </td>
+                                <td class="text-center fw-bolder bg-light">@h.SaldoAkhir</td>
+                                <td class="fw-bold">@(string.IsNullOrEmpty(h.Plant) ? "-" : h.Plant)</td>
+                                <td class="text-muted fw-bold">@(string.IsNullOrEmpty(h.StorageLocation) ? "-" : h.StorageLocation)</td>
+                                <td class="text-muted text-wrap pe-4 font-sans-serif" style="max-width: 250px; font-size: 0.8rem;">@h.Keterangan</td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr><td colspan="9" class="text-center text-muted fst-italic py-5">Belum ada catatan mutasi logistik terekam.</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

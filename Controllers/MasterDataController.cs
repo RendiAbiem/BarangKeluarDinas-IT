@@ -38,6 +38,10 @@ public class MasterDataController : Controller
         ViewBag.ListPIC = await picQuery.ToListAsync();
         ViewBag.ListLokasi = await lokasiQuery.ToListAsync();
 
+        // Mengambil 100 log riwayat logistik terakhir untuk ditampilkan di dashboard industri
+        ViewBag.ListHistory = await _context.HistoryMaterial.OrderByDescending(h => h.Tanggal).Take(100).ToListAsync();
+        ViewBag.ListBarcode = await _context.DataBarcode.ToListAsync();
+
         ViewData["CurrentMaterialFilter"] = searchMaterial;
         ViewData["CurrentPICFilter"] = searchPIC;
         ViewData["CurrentLokasiFilter"] = searchLokasi;
@@ -46,6 +50,7 @@ public class MasterDataController : Controller
     }
 
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> TambahMaterial(MasterMaterial material)
     {
         if (ModelState.IsValid)
@@ -56,12 +61,25 @@ public class MasterDataController : Controller
                 try
                 {
                     _context.MasterMaterial.Add(material);
+
+                    // LOG HISTORY: Pencatatan registrasi awal material baru
+                    var log = new HistoryMaterial
+                    {
+                        NoMaterial = material.NoMaterial,
+                        NamaUnit = material.NamaUnit,
+                        JenisAktivitas = "Registrasi Material Baru",
+                        PerubahanJumlah = material.Jumlah,
+                        SaldoAkhir = material.Jumlah,
+                        Keterangan = "Inisialisasi awal material ke dalam master data sistem."
+                    };
+                    _context.HistoryMaterial.Add(log);
+
                     await _context.SaveChangesAsync();
                     TempData["Success"] = $"Material {material.NamaUnit} berhasil disimpan!";
                 }
                 catch (Exception)
                 {
-                    TempData["Error"] = "Gagal menyimpan ke database. Pastikan Anda sudah menjalankan Update Database Migration untuk kolom Jumlah/Status.";
+                    TempData["Error"] = "Gagal menyimpan ke database.";
                 }
             }
             else
@@ -69,14 +87,11 @@ public class MasterDataController : Controller
                 TempData["Error"] = "Gagal: Nomor Material tersebut sudah terdaftar di sistem!";
             }
         }
-        else
-        {
-            TempData["Error"] = "Gagal: Format isian tidak valid. Cek kembali form Anda.";
-        }
         return RedirectToAction(nameof(Index));
     }
 
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> UpdateStokMaterial(string noMaterial, int tambahanStok)
     {
         var material = await _context.MasterMaterial.FirstOrDefaultAsync(m => m.NoMaterial == noMaterial);
@@ -85,12 +100,22 @@ public class MasterDataController : Controller
         {
             try
             {
-                // PERBAIKAN: Menggunakan properti .Jumlah menggantikan .Stok
-                material.Jumlah += tambahanStok; 
+                material.Jumlah += tambahanStok;
                 _context.Update(material);
+
+                // LOG HISTORY: Barang datang (Inbound standar)
+                var log = new HistoryMaterial
+                {
+                    NoMaterial = material.NoMaterial,
+                    NamaUnit = material.NamaUnit,
+                    JenisAktivitas = "Barang Datang / Inbound",
+                    PerubahanJumlah = tambahanStok,
+                    SaldoAkhir = material.Jumlah,
+                    Keterangan = "Penambahan stok masuk rutin dari pengadaan gudang."
+                };
+                _context.HistoryMaterial.Add(log);
+
                 await _context.SaveChangesAsync();
-                
-                // PERBAIKAN: Menggunakan properti .Jumlah untuk pesan notifikasi
                 TempData["Success"] = $"Berhasil menambah kuantitas barang ke dalam data {material.NamaUnit}. Total terbaru: {material.Jumlah}.";
             }
             catch (Exception)
@@ -98,81 +123,57 @@ public class MasterDataController : Controller
                 TempData["Error"] = "Terjadi kesalahan sistem saat mencoba menambah kuantitas barang.";
             }
         }
-        else
-        {
-            TempData["Error"] = "Data material tidak ditemukan!";
-        }
-        
         return RedirectToAction(nameof(Index));
     }
 
-    [HttpPost]
-    public async Task<IActionResult> TambahPIC(MasterPIC pic)
-    {
-        if (ModelState.IsValid)
-        {
-            try
-            {
-                _context.MasterPIC.Add(pic);
-                await _context.SaveChangesAsync();
-                TempData["Success"] = $"PIC {pic.NamaLengkap} berhasil disimpan!";
-            }
-            catch (Exception)
-            {
-                TempData["Error"] = "Gagal menyimpan data PIC ke database.";
-            }
-        }
-        else
-        {
-            TempData["Error"] = "Gagal: Form PIC tidak valid.";
-        }
-        return RedirectToAction(nameof(Index));
-    }
-
-    [HttpPost]
-    public async Task<IActionResult> TambahLokasi(MasterLokasi lokasi)
-    {
-        if (ModelState.IsValid)
-        {
-            try
-            {
-                _context.MasterLokasi.Add(lokasi);
-                await _context.SaveChangesAsync();
-                TempData["Success"] = $"Lokasi {lokasi.NamaLokasi} berhasil disimpan!";
-            }
-            catch (Exception)
-            {
-                TempData["Error"] = "Gagal menyimpan data Lokasi ke database.";
-            }
-        }
-        else
-        {
-            TempData["Error"] = "Gagal: Form Lokasi tidak valid.";
-        }
-        return RedirectToAction(nameof(Index));
-    }
-
+    // FUNGSI INDUSTRI BARU: Penyesuaian stok lanjutan (Rusak, Pinjam Luar Dinas, Koreksi Data)
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(MasterMaterial masterMaterial)
+    public async Task<IActionResult> PenyesuaianKoreksiMaterial(string noMaterial, string jenisAktivitas, int kuantitasPerubahan, string plant, string storageLocation, string keterangan)
     {
-        // Cek apakah NoMaterial sudah terdaftar
-        bool isExist = await _context.MasterMaterial
-                            .AnyAsync(m => m.NoMaterial == masterMaterial.NoMaterial);
-
-        if (isExist)
+        var material = await _context.MasterMaterial.FirstOrDefaultAsync(m => m.NoMaterial == noMaterial);
+        if (material == null)
         {
-            ModelState.AddModelError("NoMaterial", "Nomor Material ini sudah terdaftar di sistem.");
-        }
-
-        if (ModelState.IsValid)
-        {
-            _context.Add(masterMaterial);
-            await _context.SaveChangesAsync();
-            TempData["Success"] = "Data material baru berhasil disimpan.";
+            TempData["Error"] = "Material tidak ditemukan!";
             return RedirectToAction(nameof(Index));
         }
-        return View(masterMaterial);
+
+        try
+        {
+            // Update jumlah stok fisik gudang utama
+            material.Jumlah += kuantitasPerubahan; // Nilai negatif akan otomatis mengurangi stok
+            
+            if (material.Jumlah < 0)
+            {
+                TempData["Error"] = "Transaksi ditolak. Koreksi menyebabkan angka stok akhir menjadi minus.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            _context.Update(material);
+
+            // Suntik baris riwayat audit trail detail beserta lokasi Plant & SLOC
+            var log = new HistoryMaterial
+            {
+                NoMaterial = material.NoMaterial,
+                NamaUnit = material.NamaUnit,
+                JenisAktivitas = jenisAktivitas,
+                PerubahanJumlah = kuantitasPerubahan,
+                SaldoAkhir = material.Jumlah,
+                Plant = plant,
+                StorageLocation = storageLocation,
+                Keterangan = keterangan
+            };
+            _context.HistoryMaterial.Add(log);
+
+            await _context.SaveChangesAsync();
+            TempData["Success"] = $"Audit log berhasil dicatat untuk aktivitas: {jenisAktivitas}.";
+        }
+        catch (Exception)
+        {
+            TempData["Error"] = "Gagal memproses penyesuaian logistik.";
+        }
+
+        return RedirectToAction(nameof(Index));
     }
 
     [HttpPost]
@@ -180,30 +181,72 @@ public class MasterDataController : Controller
     public async Task<IActionResult> ToggleStatusMaterial(string noMaterial)
     {
         var material = await _context.MasterMaterial.FirstOrDefaultAsync(m => m.NoMaterial == noMaterial);
-        
         if (material != null)
         {
             try
             {
-                // Jika Y ubah ke N, jika selain Y ubah ke Y
-                material.Status = (material.Status == "Y") ? "N" : "Y"; 
-                
+                material.Status = (material.Status == "Y") ? "N" : "Y";
                 _context.Update(material);
+
+                var log = new HistoryMaterial
+                {
+                    NoMaterial = material.NoMaterial,
+                    NamaUnit = material.NamaUnit,
+                    JenisAktivitas = material.Status == "Y" ? "Aktivasi Sistem" : "Deaktivasi Sistem",
+                    PerubahanJumlah = 0,
+                    SaldoAkhir = material.Jumlah,
+                    Keterangan = $"Mengubah status penayangan opsi item di form input menjadi {(material.Status == "Y" ? "Aktif" : "Non-Aktif")}."
+                };
+                _context.HistoryMaterial.Add(log);
+
                 await _context.SaveChangesAsync();
-                
-                string statusBaru = material.Status == "Y" ? "Aktif" : "Non-Aktif";
-                TempData["Success"] = $"Status {material.NamaUnit} berhasil diubah menjadi {statusBaru}.";
+                TempData["Success"] = $"Status {material.NamaUnit} berhasil diubah.";
             }
-            catch (Exception)
-            {
-                TempData["Error"] = "Terjadi kesalahan saat mengubah status material.";
-            }
+            catch (Exception) { TempData["Error"] = "Gagal memproses status."; }
         }
-        else
+        return RedirectToAction(nameof(Index));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> TambahBarcodeBaru(string noMaterial, string barcodeBaru)
+    {
+        var material = await _context.MasterMaterial.FirstOrDefaultAsync(m => m.NoMaterial == noMaterial);
+        if (material == null) return NotFound();
+
+        // Cek apakah barcode sudah dipakai di barang lain
+        var isExist = await _context.DataBarcode.AnyAsync(b => b.Barcode == barcodeBaru);
+        if (isExist)
         {
-            TempData["Error"] = "Data material tidak ditemukan!";
+            TempData["Error"] = $"GAGAL: Barcode '{barcodeBaru}' sudah terdaftar di sistem!";
+            return RedirectToAction(nameof(Index));
         }
-        
+
+        // Cek agar jumlah barcode tidak melebihi stok fisik gudang
+        var jumlahBarcodeSaatIni = await _context.DataBarcode.CountAsync(b => b.NoMaterial == noMaterial);
+        if (jumlahBarcodeSaatIni >= material.Jumlah)
+        {
+            TempData["Error"] = $"GAGAL: Stok {material.NamaUnit} hanya ada {material.Jumlah}. Anda tidak bisa mendaftarkan barcode melebihi jumlah stok fisik.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        var newBarcode = new DataBarcode
+        {
+            NoMaterial = noMaterial,
+            Barcode = barcodeBaru
+        };
+
+        _context.DataBarcode.Add(newBarcode);
+
+        // Catat di History Log
+        _context.HistoryMaterial.Add(new HistoryMaterial {
+            NoMaterial = noMaterial, NamaUnit = material.NamaUnit,
+            JenisAktivitas = "Registrasi Barcode Asset", PerubahanJumlah = 0, SaldoAkhir = material.Jumlah,
+            Keterangan = $"Mendaftarkan barcode stiker fisik: {barcodeBaru}"
+        });
+
+        await _context.SaveChangesAsync();
+        TempData["Success"] = $"Barcode {barcodeBaru} berhasil diikat ke material {material.NamaUnit}.";
         return RedirectToAction(nameof(Index));
     }
 }

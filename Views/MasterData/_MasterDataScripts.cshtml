@@ -1,0 +1,83 @@
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        var tabElements = document.querySelectorAll('button[data-bs-toggle="tab"]');
+        var activeTabId = localStorage.getItem('activeMasterTab');
+        
+        if (activeTabId) {
+            var tabToActivate = document.querySelector('button[data-bs-target="' + activeTabId + '"]');
+            if (tabToActivate) { new bootstrap.Tab(tabToActivate).show(); }
+        }
+
+        tabElements.forEach(function (tabEl) {
+            tabEl.addEventListener('shown.bs.tab', function (event) {
+                localStorage.setItem('activeMasterTab', event.target.getAttribute('data-bs-target'));
+            });
+        });
+
+        var modalTambahStok = document.getElementById('modalTambahStok');
+        if (modalTambahStok) {
+            modalTambahStok.addEventListener('show.bs.modal', function (event) {
+                var button = event.relatedTarget;
+                modalTambahStok.querySelector('#modalNoMaterial').value = button.getAttribute('data-nomaterial');
+                modalTambahStok.querySelector('#modalNamaUnit').value = button.getAttribute('data-namaunit') + ' (' + button.getAttribute('data-nomaterial') + ')';
+            });
+            modalTambahStok.addEventListener('shown.bs.modal', function () { 
+                modalTambahStok.querySelector('input[name="tambahanStok"]').focus(); 
+            });
+        }
+
+        var modalKoreksiLanjutan = document.getElementById('modalKoreksiLanjutan'); 
+        if (modalKoreksiLanjutan) {
+            document.querySelectorAll('.btn-koreksi-modal').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    modalKoreksiLanjutan.querySelector('#koreksiNoMaterial').value = this.getAttribute('data-nomaterial');
+                    modalKoreksiLanjutan.querySelector('#koreksiNamaUnit').value = this.getAttribute('data-namaunit') + ' (' + this.getAttribute('data-nomaterial') + ')';
+                });
+            });
+            modalKoreksiLanjutan.addEventListener('shown.bs.modal', function () { 
+                modalKoreksiLanjutan.querySelector('input[name="kuantitasPerubahan"]').focus(); 
+            });
+        }
+
+        var modalKelolaBarcode = document.getElementById('modalKelolaBarcode'); 
+        if (modalKelolaBarcode) {
+            document.querySelectorAll('.btn-barcode-modal').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    var noMat = this.getAttribute('data-nomaterial');
+                    var nama = this.getAttribute('data-namaunit');
+                    
+                    modalKelolaBarcode.querySelector('#barcodeNoMaterial').value = noMat;
+                    modalKelolaBarcode.querySelector('#barcodeNamaUnit').value = nama + ' (' + noMat + ')';
+                });
+            });
+            modalKelolaBarcode.addEventListener('shown.bs.modal', function () { 
+                modalKelolaBarcode.querySelector('input[name="barcodeBaru"]').focus(); 
+            });
+        }
+
+        var modalLihatBarcode = document.getElementById('modalLihatBarcode');
+        if (modalLihatBarcode) {
+            document.querySelectorAll('.btn-lihat-barcode').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    var noMat = this.getAttribute('data-nomaterial');
+                    var nama = this.getAttribute('data-namaunit');
+                    var barcodes = JSON.parse(this.getAttribute('data-barcodes'));
+                    
+                    modalLihatBarcode.querySelector('#lihatBarcodeNoMaterial').textContent = noMat;
+                    modalLihatBarcode.querySelector('#lihatBarcodeNamaUnit').textContent = nama;
+                    
+                    var listContainer = modalLihatBarcode.querySelector('#listBarcodeContainer');
+                    listContainer.innerHTML = ''; 
+                    
+                    barcodes.forEach(function(b) {
+                        var li = document.createElement('li');
+                        li.className = 'list-group-item d-flex justify-content-between align-items-center bg-transparent py-2';
+                        li.innerHTML = '<span class="font-monospace fw-bolder text-primary">' + b.Barcode + '</span>' + 
+                                       '<span class="badge bg-secondary rounded-pill" style="font-size:0.65rem;">' + b.Tanggal + '</span>';
+                        listContainer.appendChild(li);
+                    });
+                });
+            });
+        }
+    });
+</script>

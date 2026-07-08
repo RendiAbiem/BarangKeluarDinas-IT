@@ -1,15 +1,15 @@
 @{
-    ViewData["Title"] = "Kelola Master Data";
+    ViewData["Title"] = "Kelola Master Data & Inventori";
 }
 
 <style>
-    /* Styling tambahan untuk menajamkan kesan Dashboard Enterprise */
-    .nav-tabs .nav-link { color: #5a6268; border: none; border-bottom: 3px solid transparent; transition: all 0.2s ease-in-out; }
-    .nav-tabs .nav-link:hover { border-bottom: 3px solid #cbd3da; }
+    .nav-tabs .nav-link { color: #6c757d; border: none; border-bottom: 3px solid transparent; transition: all 0.2s ease-in-out; font-weight: 600; padding: 0.75rem 1.25rem; }
+    .nav-tabs .nav-link:hover { color: #495057; border-bottom: 3px solid #cbd3da; }
     .nav-tabs .nav-link.active { color: #0d6efd; background-color: transparent; border-bottom: 3px solid #0d6efd; }
-    .table-modern thead th { font-size: 0.75rem; letter-spacing: 0.5px; border-bottom: 2px solid #dee2e6; color: #6c757d; }
-    .card-custom { border-radius: 0.5rem; border: none; box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075); }
-    .btn-xs { padding: 0.2rem 0.5rem; font-size: 0.75rem; border-radius: 0.2rem; }
+    .table-modern thead th { font-size: 0.75rem; letter-spacing: 0.5px; border-bottom: 2px solid #dee2e6; color: #495057; text-transform: uppercase; }
+    .table-modern tbody td { font-size: 0.85rem; vertical-align: middle; }
+    .card-custom { border-radius: 0.5rem; border: 1px solid #e9ecef; box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.03); }
+    .btn-xs { padding: 0.2rem 0.5rem; font-size: 0.75rem; border-radius: 0.25rem; font-weight: bold; }
 </style>
 
 <div class="container-fluid mt-4 px-md-4 mb-5">
@@ -31,364 +31,42 @@
 
     <div class="d-flex justify-content-between align-items-end mb-4">
         <div>
-            <h2 class="fw-bolder mb-1" style="letter-spacing: -0.5px;">Master Data Sistem</h2>
-            <p class="text-muted small mb-0">Kelola entitas inti logistik, personel, dan lokasi operasional infrastruktur IT.</p>
+            <h2 class="fw-bolder mb-1" style="letter-spacing: -0.5px;">Panel Logistik & Master Data</h2>
+            <p class="text-muted small mb-0">Manajemen inventori pusat, audit mutasi barang (in/out), dan pengaturan entitas sistem.</p>
         </div>
     </div>
 
     <ul class="nav nav-tabs mb-4 border-bottom-0" id="masterDataTabs" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active fw-bold px-4 py-2 text-uppercase" style="font-size: 0.85rem;" id="material-tab" data-bs-toggle="tab" data-bs-target="#material" type="button" role="tab">Database Material</button>
+            <button class="nav-link active text-uppercase" style="font-size: 0.8rem;" id="material-tab" data-bs-toggle="tab" data-bs-target="#material" type="button" role="tab">Database Material</button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link fw-bold px-4 py-2 text-uppercase" style="font-size: 0.85rem;" id="pic-tab" data-bs-toggle="tab" data-bs-target="#pic" type="button" role="tab">Tim / Teknisi</button>
+            <button class="nav-link text-uppercase" style="font-size: 0.8rem;" id="history-tab" data-bs-toggle="tab" data-bs-target="#history" type="button" role="tab">History Log Barang</button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link fw-bold px-4 py-2 text-uppercase" style="font-size: 0.85rem;" id="lokasi-tab" data-bs-toggle="tab" data-bs-target="#lokasi" type="button" role="tab">Lokasi Site</button>
+            <button class="nav-link text-uppercase" style="font-size: 0.8rem;" id="pic-tab" data-bs-toggle="tab" data-bs-target="#pic" type="button" role="tab">Tim / Teknisi</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link text-uppercase" style="font-size: 0.8rem;" id="lokasi-tab" data-bs-toggle="tab" data-bs-target="#lokasi" type="button" role="tab">Lokasi Site</button>
         </li>
     </ul>
 
     <div class="tab-content" id="masterDataTabsContent">
-        
         <div class="tab-pane fade show active" id="material" role="tabpanel">
-            <div class="row g-4">
-                
-                <div class="col-xl-4 col-lg-5">
-                    <div class="card card-custom h-100">
-                        <div class="card-header bg-white border-bottom pt-4 pb-3">
-                            <h6 class="m-0 fw-bolder text-primary text-uppercase">Input Material Baru</h6>
-                        </div>
-                        <div class="card-body bg-light">
-                            <form asp-action="TambahMaterial" method="post">
-                                <div class="mb-3">
-                                    <label class="form-label fw-bold text-muted small text-uppercase">Nomor Material</label>
-                                    <input name="NoMaterial" class="form-control form-control-sm border-secondary shadow-none" placeholder="Misal: 20095735" required />
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label fw-bold text-muted small text-uppercase">Spesifikasi / Nama Unit</label>
-                                    <input name="NamaUnit" class="form-control form-control-sm border-secondary shadow-none" placeholder="Misal: Kabel STP Cat 6" required />
-                                </div>
-                                <div class="row mb-3">
-                                    <div class="col-sm-6 mb-3 mb-sm-0">
-                                        <label class="form-label fw-bold text-muted small text-uppercase">Satuan</label>
-                                        <input name="Satuan" class="form-control form-control-sm border-secondary shadow-none" placeholder="pcs / rol / mtr" required />
-                                    </div>
-                                    <div class="col-sm-6">
-                                        <label class="form-label fw-bold text-muted small text-uppercase">Stok Awal</label>
-                                        <input name="Jumlah" type="number" class="form-control form-control-sm border-success bg-white text-center fw-bold shadow-none" value="0" min="0" required />
-                                    </div>
-                                </div>
-                                <div class="mb-4">
-                                    <label class="form-label fw-bold text-muted small text-uppercase">Status Operasional</label>
-                                    <select name="Status" class="form-select form-select-sm border-secondary shadow-none">
-                                        <option value="Y" selected>Aktif (Tersedia)</option>
-                                        <option value="N">Non-Aktif (Arsip)</option>
-                                    </select>
-                                </div>
-                                <button type="submit" class="btn btn-primary w-100 fw-bold">SIMPAN MATERIAL</button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-xl-8 col-lg-7">
-                    <div class="card card-custom h-100">
-                        <div class="card-header bg-white border-bottom pt-4 pb-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
-                            <h6 class="m-0 fw-bolder text-dark text-uppercase">Inventory Logistik</h6>
-                            
-                            <form asp-action="Index" method="get" class="d-flex gap-2 m-0" style="max-width: 350px; width: 100%;">
-                                <div class="input-group input-group-sm shadow-sm">
-                                    <input type="text" name="searchMaterial" class="form-control border-secondary" placeholder="Cari Part Number / Nama..." value="@ViewData["CurrentMaterialFilter"]" />
-                                    <button type="submit" class="btn btn-dark px-3 fw-bold">CARI</button>
-                                </div>
-                                @if (!string.IsNullOrEmpty(ViewData["CurrentMaterialFilter"]?.ToString()))
-                                {
-                                    <a asp-action="Index" class="btn btn-sm btn-outline-secondary fw-bold">Reset</a>
-                                }
-                            </form>
-                        </div>
-                        
-                        <div class="card-body p-0">
-                            <div class="table-responsive" style="max-height: 600px; overflow-y: auto;">
-                                <table class="table table-hover table-sm table-modern align-middle mb-0">
-                                    <thead class="table-light position-sticky top-0 shadow-sm" style="z-index: 1;">
-                                        <tr>
-                                            <th class="ps-4">NO MATERIAL</th>
-                                            <th>DESKRIPSI UNIT</th>
-                                            <th class="text-center">STN</th>
-                                            <th class="text-center text-primary">QTY GUDANG</th>
-                                            <th class="text-center">STATUS</th>
-                                            <th class="text-center pe-4" style="min-width: 190px;">TINDAKAN</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @if (ViewBag.ListMaterial != null && ((List<MasterMaterial>)ViewBag.ListMaterial).Any())
-                                        {
-                                            foreach(var item in ViewBag.ListMaterial) {
-                                                <tr class="@(item.Status == "N" ? "table-secondary opacity-75" : "")">
-                                                    <td class="ps-4 fw-bold font-monospace text-dark" style="font-size: 0.85rem;">@item.NoMaterial</td>
-                                                    <td class="fw-semibold text-dark" style="font-size: 0.9rem;">@item.NamaUnit</td>
-                                                    <td class="text-center text-muted small text-uppercase">@item.Satuan</td>
-                                                    <td class="text-center">
-                                                        <span class="badge @(item.Jumlah > 0 ? "bg-primary" : "bg-danger") px-2 py-1 fs-6 rounded-3">@item.Jumlah</span>
-                                                    </td>
-                                                    <td class="text-center">
-                                                        @if(item.Status == "Y") {
-                                                            <span class="badge bg-success-subtle text-success border border-success border-opacity-25 rounded-pill px-2">Aktif</span>
-                                                        } else {
-                                                            <span class="badge bg-danger-subtle text-danger border border-danger border-opacity-25 rounded-pill px-2">Non-Aktif</span>
-                                                        }
-                                                    </td>
-                                                    <td class="text-center pe-4">
-                                                        <div class="d-flex justify-content-center gap-1">
-                                                            <button type="button" class="btn btn-xs btn-outline-success fw-bold border-2" data-bs-toggle="modal" data-bs-target="#modalTambahStok" data-nomaterial="@item.NoMaterial" data-namaunit="@item.NamaUnit" title="Barang Datang">
-                                                                + Stok
-                                                            </button>
-                                                            
-                                                            <form asp-action="ToggleStatusMaterial" method="post" class="m-0">
-                                                                <input type="hidden" name="noMaterial" value="@item.NoMaterial" />
-                                                                @if(item.Status == "Y") {
-                                                                    <button type="submit" class="btn btn-xs btn-outline-danger fw-bold border-2" onclick="return confirm('Non-aktifkan material ini agar tidak muncul di form input?');">Matikan</button>
-                                                                } else {
-                                                                    <button type="submit" class="btn btn-xs btn-primary fw-bold border-2" onclick="return confirm('Aktifkan kembali material ini?');">Nyalakan</button>
-                                                                }
-                                                            </form>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            }
-                                        }
-                                        else
-                                        {
-                                            <tr><td colspan="6" class="text-center text-muted fst-italic py-5">Database material kosong atau tidak ditemukan.</td></tr>
-                                        }
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <partial name="_MaterialTab" />
         </div>
-
+        <div class="tab-pane fade" id="history" role="tabpanel">
+            <partial name="_HistoryTab" />
+        </div>
         <div class="tab-pane fade" id="pic" role="tabpanel">
-            <div class="row g-4">
-                <div class="col-md-4">
-                    <div class="card card-custom h-100">
-                        <div class="card-header bg-white border-bottom pt-4 pb-3">
-                            <h6 class="m-0 fw-bolder text-success text-uppercase">Registrasi PIC Baru</h6>
-                        </div>
-                        <div class="card-body bg-light">
-                            <form asp-action="TambahPIC" method="post">
-                                <div class="mb-3">
-                                    <label class="form-label fw-bold text-muted small text-uppercase">Nama Lengkap</label>
-                                    <input name="NamaLengkap" class="form-control form-control-sm border-secondary shadow-none" placeholder="Nama teknisi / pekerja..." required />
-                                </div>
-                                <div class="mb-4">
-                                    <label class="form-label fw-bold text-muted small text-uppercase">Departemen</label>
-                                    <input name="Departemen" class="form-control form-control-sm border-secondary shadow-none" value="IT" required />
-                                </div>
-                                <button type="submit" class="btn btn-success w-100 fw-bold">SIMPAN PIC</button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-md-8">
-                    <div class="card card-custom h-100">
-                        <div class="card-header bg-white border-bottom pt-4 pb-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
-                            <h6 class="m-0 fw-bolder text-dark text-uppercase">Daftar Personel IT</h6>
-                            
-                            <form asp-action="Index" method="get" class="d-flex gap-2 m-0" style="max-width: 300px; width: 100%;">
-                                <div class="input-group input-group-sm shadow-sm">
-                                    <input type="text" name="searchPIC" class="form-control border-secondary" placeholder="Cari Nama..." value="@ViewData["CurrentPICFilter"]" />
-                                    <button type="submit" class="btn btn-dark px-3 fw-bold">CARI</button>
-                                </div>
-                                @if (!string.IsNullOrEmpty(ViewData["CurrentPICFilter"]?.ToString()))
-                                {
-                                    <a asp-action="Index" class="btn btn-sm btn-outline-secondary fw-bold">Reset</a>
-                                }
-                            </form>
-                        </div>
-                        
-                        <div class="card-body p-0">
-                            <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
-                                <table class="table table-hover table-sm table-modern align-middle mb-0">
-                                    <thead class="table-light position-sticky top-0 shadow-sm">
-                                        <tr>
-                                            <th class="ps-4">NAMA LENGKAP PERSONEL</th>
-                                            <th>DEPARTEMEN</th>
-                                            <th class="text-center pe-4">STATUS</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @if (ViewBag.ListPIC != null && ((List<MasterPIC>)ViewBag.ListPIC).Any())
-                                        {
-                                            foreach(var item in ViewBag.ListPIC) {
-                                                <tr>
-                                                    <td class="ps-4 fw-bold text-dark" style="font-size: 0.9rem;">@item.NamaLengkap</td>
-                                                    <td class="text-muted small fw-semibold text-uppercase">@item.Departemen</td>
-                                                    <td class="text-center pe-4">
-                                                        <span class="badge bg-success-subtle text-success border border-success border-opacity-25 rounded-pill px-3">Active</span>
-                                                    </td>
-                                                </tr>
-                                            }
-                                        }
-                                        else
-                                        {
-                                            <tr><td colspan="3" class="text-center text-muted fst-italic py-5">Database PIC kosong.</td></tr>
-                                        }
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <partial name="_PicTab" />
         </div>
-
         <div class="tab-pane fade" id="lokasi" role="tabpanel">
-            <div class="row g-4">
-                <div class="col-md-4">
-                    <div class="card card-custom h-100">
-                        <div class="card-header bg-white border-bottom pt-4 pb-3">
-                            <h6 class="m-0 fw-bolder text-danger text-uppercase">Input Lokasi Site Baru</h6>
-                        </div>
-                        <div class="card-body bg-light">
-                            <form asp-action="TambahLokasi" method="post">
-                                <div class="mb-4">
-                                    <label class="form-label fw-bold text-muted small text-uppercase">Nama Lokasi / Area</label>
-                                    <input name="NamaLokasi" class="form-control form-control-sm border-secondary shadow-none" placeholder="Contoh: HO Sudirman" required />
-                                </div>
-                                <button type="submit" class="btn btn-danger w-100 fw-bold">SIMPAN LOKASI</button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-md-8">
-                    <div class="card card-custom h-100">
-                        <div class="card-header bg-white border-bottom pt-4 pb-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
-                            <h6 class="m-0 fw-bolder text-dark text-uppercase">Database Titik Lokasi Operasional</h6>
-                            
-                            <form asp-action="Index" method="get" class="d-flex gap-2 m-0" style="max-width: 300px; width: 100%;">
-                                <div class="input-group input-group-sm shadow-sm">
-                                    <input type="text" name="searchLokasi" class="form-control border-secondary" placeholder="Cari Site..." value="@ViewData["CurrentLokasiFilter"]" />
-                                    <button type="submit" class="btn btn-dark px-3 fw-bold">CARI</button>
-                                </div>
-                                @if (!string.IsNullOrEmpty(ViewData["CurrentLokasiFilter"]?.ToString()))
-                                {
-                                    <a asp-action="Index" class="btn btn-sm btn-outline-secondary fw-bold">Reset</a>
-                                }
-                            </form>
-                        </div>
-                        
-                        <div class="card-body p-0">
-                            <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
-                                <table class="table table-hover table-sm table-modern align-middle mb-0">
-                                    <thead class="table-light position-sticky top-0 shadow-sm">
-                                        <tr>
-                                            <th class="ps-4" style="width: 80px;">ID TIER</th>
-                                            <th class="pe-4">NAMA SITE / LOKASI TERDAFTAR</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @if (ViewBag.ListLokasi != null && ((List<MasterLokasi>)ViewBag.ListLokasi).Any())
-                                        {
-                                            foreach(var item in ViewBag.ListLokasi) {
-                                                <tr>
-                                                    <td class="ps-4 text-muted font-monospace small">#@item.Id.ToString("D3")</td>
-                                                    <td class="fw-bold text-dark pe-4" style="font-size: 0.9rem;">@item.NamaLokasi</td>
-                                                </tr>
-                                            }
-                                        }
-                                        else
-                                        {
-                                            <tr><td colspan="2" class="text-center text-muted fst-italic py-5">Database lokasi kosong.</td></tr>
-                                        }
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-    </div>
-</div>
-
-<div class="modal fade" id="modalTambahStok" tabindex="-1" aria-labelledby="modalTambahStokLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg" style="border-radius: 0.75rem; overflow: hidden;">
-            <div class="modal-header bg-dark text-white border-0 py-3">
-                <h5 class="modal-title fw-bold text-uppercase fs-6" id="modalTambahStokLabel">📥 Registrasi Stok Inbound</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form asp-action="UpdateStokMaterial" method="post">
-                <div class="modal-body bg-light p-4">
-                    <input type="hidden" name="noMaterial" id="modalNoMaterial" />
-                    
-                    <div class="mb-3">
-                        <label class="form-label fw-bold text-muted small text-uppercase">Spesifikasi Material</label>
-                        <input type="text" class="form-control bg-white text-dark fw-bold shadow-none" id="modalNamaUnit" readonly style="border: 1px dashed #ccc;" />
-                    </div>
-                    <div class="mb-2">
-                        <label class="form-label fw-bold text-primary small text-uppercase">Kuantitas Barang Masuk (Positif)</label>
-                        <input type="number" name="tambahanStok" class="form-control form-control-lg border-primary border-2 text-center fw-bolder shadow-sm" placeholder="Misal: 10" min="1" required />
-                    </div>
-                    <div class="p-2 bg-primary-subtle text-primary border border-primary border-opacity-25 rounded-3 mt-3 small text-center">
-                        <i class="fw-semibold">Stok akan diakumulasikan secara otomatis ke dalam sistem.</i>
-                    </div>
-                </div>
-                <div class="modal-footer border-top p-3 bg-white">
-                    <button type="button" class="btn btn-light border fw-bold px-4" data-bs-dismiss="modal">BATAL</button>
-                    <button type="submit" class="btn btn-primary px-4 fw-bold shadow-sm">TAMBAHKAN STOK</button>
-                </div>
-            </form>
+            <partial name="_LokasiTab" />
         </div>
     </div>
 </div>
 
 @section Scripts {
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            // Memory Tab (Agar tidak kembali ke tab awal saat di-refresh)
-            var tabElements = document.querySelectorAll('button[data-bs-toggle="tab"]');
-            var activeTabId = localStorage.getItem('activeMasterTab');
-            
-            if (activeTabId) {
-                var tabToActivate = document.querySelector('button[data-bs-target="' + activeTabId + '"]');
-                if (tabToActivate) {
-                    var tab = new bootstrap.Tab(tabToActivate);
-                    tab.show();
-                }
-            }
-
-            tabElements.forEach(function (tabEl) {
-                tabEl.addEventListener('shown.bs.tab', function (event) {
-                    var target = event.target.getAttribute('data-bs-target');
-                    localStorage.setItem('activeMasterTab', target);
-                });
-            });
-
-            // Passing Data ke Modal Tambah Stok
-            var modalTambahStok = document.getElementById('modalTambahStok');
-            if (modalTambahStok) {
-                modalTambahStok.addEventListener('show.bs.modal', function (event) {
-                    var button = event.relatedTarget;
-                    var noMaterial = button.getAttribute('data-nomaterial');
-                    var namaUnit = button.getAttribute('data-namaunit');
-
-                    modalTambahStok.querySelector('#modalNoMaterial').value = noMaterial;
-                    modalTambahStok.querySelector('#modalNamaUnit').value = namaUnit + ' (' + noMaterial + ')';
-                });
-                
-                // Auto focus pada input number saat modal terbuka
-                modalTambahStok.addEventListener('shown.bs.modal', function () {
-                    modalTambahStok.querySelector('input[name="tambahanStok"]').focus();
-                });
-            }
-        });
-    </script>
+    <partial name="_MasterDataScripts" />
 }

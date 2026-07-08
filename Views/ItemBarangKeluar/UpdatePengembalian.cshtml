@@ -4,7 +4,6 @@
     ViewData["Title"] = "Update Status Barang";
 }
 
-<!-- Batasan max-width dihapus agar tampilan melebar -->
 <div class="container mt-4">
     <div class="card shadow-sm border-0">
         <div class="card-header bg-dark text-white fw-bold py-3">
@@ -12,7 +11,6 @@
         </div>
         <div class="card-body bg-light p-4">
             
-            <!-- Panel Informasi Spesifikasi Barang Utama -->
             <div class="card border-0 shadow-sm mb-4">
                 <div class="card-body bg-white rounded border-start border-info border-4">
                     <div class="row text-center text-md-start g-3">
@@ -37,7 +35,6 @@
             </div>
 
             <form asp-action="UpdatePengembalian" method="post">
-                <!-- Hidden fields wajib untuk mempertahankan context data binding EF Core -->
                 <input type="hidden" asp-for="Id" />
                 <input type="hidden" asp-for="TugasanDinasId" />
                 <input type="hidden" asp-for="NoMaterial" />
@@ -47,7 +44,6 @@
                 <input type="hidden" asp-for="Barcode" />
                 <input type="hidden" asp-for="JumlahBawa" />
 
-                <!-- Bagian 1: Penentuan Status Utama -->
                 <div class="card border-0 shadow-sm mb-4">
                     <div class="card-body bg-white rounded">
                         <div class="form-group">
@@ -61,7 +57,6 @@
                     </div>
                 </div>
 
-                <!-- Bagian 2: Fitur Pemecahan Kuantitas (Auto-Split) -->
                 @if (Model.JumlahBawa > 1)
                 {
                     <div class="card border-0 shadow-sm mb-4 bg-white" id="divAutoSplit" style="display: none;">
@@ -69,7 +64,6 @@
                             <label class="form-label fw-bold text-primary text-uppercase small" style="letter-spacing: 0.5px;">Opsi Pemecahan Jumlah (Auto-Split)</label>
                             <p class="small text-muted mb-3">Jika tidak semua dari total <strong>@Model.JumlahBawa @Model.STN</strong> material ini terpakai di lapangan, tentukan jumlah sisa yang ingin dikembalikan utuh ke dalam stok gudang IT.</p>
                             
-                            <!-- Batasan max-width pada kotak input ini dipertahankan agar tidak membentang penuh dari kiri ke kanan -->
                             <div class="input-group shadow-sm" style="max-width: 320px;">
                                 <span class="input-group-text bg-light text-dark fw-semibold">Jumlah Sisa Kembali:</span>
                                 <input type="number" name="sisaKembali" id="inputSisaKembali" class="form-control text-center fw-bold fs-5" value="0" min="0" max="@(Model.JumlahBawa - 1)" />
@@ -80,7 +74,6 @@
                     </div>
                 }
 
-                <!-- Bagian 3: Dokumen Logistik Lapangan (Dinamis via JavaScript) -->
                 <div id="divDetailPemakaian" style="display: none;">
                     <div class="card border-0 shadow-sm mb-4">
                         <div class="card-header bg-secondary text-white fw-bold small text-uppercase py-2" style="letter-spacing: 0.5px;">
@@ -107,7 +100,6 @@
                     </div>
                 </div>
 
-                <!-- Bagian 4: Catatan Riwayat Tambahan -->
                 <div class="card border-0 shadow-sm mb-4">
                     <div class="card-body bg-white rounded">
                         <div class="form-group">
@@ -117,7 +109,6 @@
                     </div>
                 </div>
 
-                <!-- Tombol Aksi Akhir -->
                 <div class="d-flex justify-content-between align-items-center mt-4">
                     <a asp-controller="TugasanDinas" asp-action="Details" asp-route-id="@Model.TugasanDinasId" class="btn btn-outline-secondary px-4 fw-bold">Kembali</a>
                     <button type="submit" class="btn btn-warning text-dark px-5 fw-bold shadow-sm">Simpan Laporan Akhir</button>

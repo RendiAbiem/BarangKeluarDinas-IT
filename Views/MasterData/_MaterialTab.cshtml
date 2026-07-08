@@ -1,0 +1,250 @@
+@using BarangKeluarDinas.Models
+
+<div class="row g-4">
+    <div class="col-xl-4 col-lg-5">
+        <div class="card card-custom h-100">
+            <div class="card-header bg-white border-bottom pt-4 pb-3">
+                <h6 class="m-0 fw-bolder text-primary text-uppercase" style="font-size: 0.85rem;">Input Material Baru</h6>
+            </div>
+            <div class="card-body bg-light">
+                <form asp-action="TambahMaterial" method="post">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-muted small text-uppercase mb-1">Nomor Material</label>
+                        <input name="NoMaterial" class="form-control form-control-sm border-secondary shadow-none fw-bold" placeholder="Misal: 20095735" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-muted small text-uppercase mb-1">Spesifikasi / Nama Unit</label>
+                        <input name="NamaUnit" class="form-control form-control-sm border-secondary shadow-none" placeholder="Misal: Kabel STP Cat 6" required />
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-6 mb-3 mb-sm-0">
+                            <label class="form-label fw-bold text-muted small text-uppercase mb-1">Satuan / STN</label>
+                            <input name="Satuan" class="form-control form-control-sm border-secondary shadow-none" placeholder="pcs / rol / mtr" required />
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label fw-bold text-muted small text-uppercase mb-1">Stok Awal</label>
+                            <input name="Jumlah" type="number" class="form-control form-control-sm border-success bg-white text-center fw-bolder shadow-none" value="0" min="0" required />
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-bold text-muted small text-uppercase mb-1">Status Operasional</label>
+                        <select name="Status" class="form-select form-select-sm border-secondary shadow-none fw-bold">
+                            <option value="Y" selected>Aktif (Tersedia)</option>
+                            <option value="N">Non-Aktif (Arsip)</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 fw-bold shadow-sm py-2">SIMPAN MATERIAL</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-8 col-lg-7">
+        <div class="card card-custom h-100">
+            <div class="card-header bg-white border-bottom pt-4 pb-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h6 class="m-0 fw-bolder text-dark text-uppercase" style="font-size: 0.85rem;">Stok Fisik Gudang Utama</h6>
+                <form asp-action="Index" method="get" class="d-flex gap-2 m-0" style="max-width: 320px; width: 100%;">
+                    <div class="input-group input-group-sm shadow-sm">
+                        <input type="text" name="searchMaterial" class="form-control border-secondary shadow-none" placeholder="Cari No / Nama..." value="@ViewData["CurrentMaterialFilter"]" />
+                        <button type="submit" class="btn btn-dark px-3 fw-bold">CARI</button>
+                    </div>
+                </form>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive" style="max-height: 600px; overflow-y: auto;">
+                    <table class="table table-hover table-modern mb-0">
+                        <thead class="table-light position-sticky top-0 shadow-sm" style="z-index: 1;">
+                            <tr>
+                                <th class="ps-4">NO MATERIAL</th>
+                                <th>DESKRIPSI UNIT</th>
+                                <th class="text-center">STN</th>
+                                <th class="text-center text-primary">QTY GUDANG</th>
+                                <th class="text-center">STATUS</th>
+                                <th class="text-center pe-4" style="min-width: 280px;">TINDAKAN KOREKSI</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (ViewBag.ListMaterial != null && ((List<MasterMaterial>)ViewBag.ListMaterial).Any())
+                            {
+                                foreach(var item in ViewBag.ListMaterial) {
+                                    <tr class="@(item.Status == "N" ? "table-secondary opacity-75" : "")">
+                                        <td class="ps-4 fw-bolder font-monospace text-dark">@item.NoMaterial</td>
+                                        <td class="fw-semibold text-dark">@item.NamaUnit</td>
+                                        <td class="text-center text-muted text-uppercase">@item.Satuan</td>
+                                        <td class="text-center">
+                                            <span class="badge @(item.Jumlah > 0 ? "bg-primary" : "bg-danger") px-2 py-1 fs-6 rounded-2 shadow-sm mb-1">@item.Jumlah</span><br/>
+                                            @{
+                                                var listBarcode = ViewBag.ListBarcode as List<DataBarcode> ?? new List<DataBarcode>();
+                                                var itemBarcodes = listBarcode.Where(b => b.NoMaterial == item.NoMaterial)
+                                                                              .Select(b => new { b.Barcode, Tanggal = b.TanggalDidaftarkan.ToString("dd MMM yyyy") }).ToList();
+                                                var jsonBarcodes = System.Text.Json.JsonSerializer.Serialize(itemBarcodes);
+                                            }
+                                            @if(itemBarcodes.Count > 0) {
+                                                <button type="button" class="btn btn-sm btn-link text-info fw-bold p-0 text-decoration-none btn-lihat-barcode" style="font-size: 0.7rem;" data-bs-toggle="modal" data-bs-target="#modalLihatBarcode" data-nomaterial="@item.NoMaterial" data-namaunit="@item.NamaUnit" data-barcodes='@Html.Raw(jsonBarcodes)'>
+                                                    Lihat @itemBarcodes.Count Barcode
+                                                </button>
+                                            } else {
+                                                <small class="text-muted fw-bold" style="font-size: 0.65rem;">0 Barcode</small>
+                                            }
+                                        </td>
+                                        <td class="text-center">
+                                            @if(item.Status == "Y") {
+                                                <span class="badge bg-success-subtle text-success border border-success border-opacity-25 rounded-pill px-2">Aktif</span>
+                                            } else {
+                                                <span class="badge bg-danger-subtle text-danger border border-danger border-opacity-25 rounded-pill px-2">Non-Aktif</span>
+                                            }
+                                        </td>
+                                        <td class="text-center pe-4">
+                                            <div class="d-flex justify-content-center gap-1">
+                                                <button type="button" class="btn btn-xs btn-outline-success border-2 shadow-sm" data-bs-toggle="modal" data-bs-target="#modalTambahStok" data-nomaterial="@item.NoMaterial" data-namaunit="@item.NamaUnit">Stok</button>
+                                                <button type="button" class="btn btn-xs btn-outline-info border-2 shadow-sm btn-barcode-modal" data-bs-toggle="modal" data-bs-target="#modalKelolaBarcode" data-nomaterial="@item.NoMaterial" data-namaunit="@item.NamaUnit">Barcode</button>
+                                                <button type="button" class="btn btn-xs btn-outline-dark border-2 shadow-sm btn-koreksi-modal" data-bs-toggle="modal" data-bs-target="#modalKoreksiLanjutan" data-nomaterial="@item.NoMaterial" data-namaunit="@item.NamaUnit">Adjust</button>
+                                                <form asp-action="ToggleStatusMaterial" method="post" class="m-0">
+                                                    <input type="hidden" name="noMaterial" value="@item.NoMaterial" />
+                                                    @if(item.Status == "Y") {
+                                                        <button type="submit" class="btn btn-xs btn-danger shadow-sm border-danger border-2" onclick="return confirm('Non-aktifkan material ini?');">Matikan</button>
+                                                    } else {
+                                                        <button type="submit" class="btn btn-xs btn-primary shadow-sm border-primary border-2" onclick="return confirm('Aktifkan kembali material ini?');">Nyalakan</button>
+                                                    }
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalTambahStok" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 0.75rem; overflow: hidden;">
+            <div class="modal-header bg-dark text-white border-0 py-3">
+                <h5 class="modal-title fw-bold text-uppercase fs-6" id="modalTambahStokLabel">Registrasi Stok Inbound</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-action="UpdateStokMaterial" method="post">
+                <div class="modal-body bg-light p-4">
+                    <input type="hidden" name="noMaterial" id="modalNoMaterial" />
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-muted small text-uppercase mb-1">Spesifikasi Material</label>
+                        <input type="text" class="form-control bg-white text-dark fw-bold shadow-none border-secondary font-monospace" id="modalNamaUnit" readonly style="border-style: dashed;" />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label fw-bold text-success small text-uppercase mb-1">Kuantitas Barang Masuk (Positif)</label>
+                        <input type="number" name="tambahanStok" class="form-control form-control-lg border-success border-2 text-center fw-bolder shadow-sm" placeholder="Misal: 10" min="1" required />
+                    </div>
+                </div>
+                <div class="modal-footer border-top p-3 bg-white">
+                    <button type="button" class="btn btn-light border fw-bold px-4" data-bs-dismiss="modal">BATAL</button>
+                    <button type="submit" class="btn btn-success px-4 fw-bold shadow-sm">SIMPAN INBOUND</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalKoreksiLanjutan" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 0.75rem; overflow: hidden;">
+            <div class="modal-header bg-primary text-white border-0 py-3">
+                <h5 class="modal-title fw-bold text-uppercase fs-6">Form Penyesuaian Mutasi Khusus</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-action="PenyesuaianKoreksiMaterial" method="post">
+                <div class="modal-body bg-light p-4">
+                    <input type="hidden" name="noMaterial" id="koreksiNoMaterial" />
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-muted small text-uppercase mb-1">Target Material</label>
+                        <input type="text" class="form-control bg-white fw-bold text-dark border-secondary font-monospace" id="koreksiNamaUnit" readonly style="border-style: dashed;" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-primary small text-uppercase mb-1">Kategori Aktivitas Mutasi</label>
+                        <select name="jenisAktivitas" class="form-select border-primary shadow-sm fw-bold" required>
+                            <option value="Pinjam Luar Dinas">Dipinjam / Transfer Keluar (Outbound)</option>
+                            <option value="Unit Rusak">Unit Rusak / Reject Lapangan</option>
+                            <option value="Koreksi Data">Koreksi Data Stok Fisik (Opname)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3 p-3 bg-danger-subtle border border-danger border-opacity-25 rounded-3">
+                        <label class="form-label fw-bold text-danger small text-uppercase mb-1">Kuantitas Penyesuaian</label>
+                        <input type="number" name="kuantitasPerubahan" class="form-control form-control-lg text-center fw-bolder border-danger shadow-sm" placeholder="-5 (Kurang) atau 5 (Tambah)" required />
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-6 mb-3 mb-sm-0">
+                            <label class="form-label fw-bold text-muted small text-uppercase mb-1">Target Plant Tier</label>
+                            <input name="plant" class="form-control border-secondary shadow-none" placeholder="Misal: Plant 1 / HO" required />
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label fw-bold text-muted small text-uppercase mb-1">Storage Loc (Sloc)</label>
+                            <input name="storageLocation" class="form-control border-secondary shadow-none" placeholder="Misal: Gudang C" required />
+                        </div>
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label fw-bold text-muted small text-uppercase mb-1">Catatan Audit / Berita Acara</label>
+                        <textarea name="keterangan" class="form-control border-secondary shadow-none" rows="2" placeholder="Sertakan tiket..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-top p-3 bg-white">
+                    <button type="button" class="btn btn-light border fw-bold px-4" data-bs-dismiss="modal">BATAL</button>
+                    <button type="submit" class="btn btn-primary px-4 fw-bold shadow-sm">SIMPAN ADJUSTMENT</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalKelolaBarcode" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 0.75rem; overflow: hidden;">
+            <div class="modal-header bg-info text-dark border-0 py-3">
+                <h5 class="modal-title fw-bold text-uppercase fs-6">Registrasi Barcode Fisik</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-action="TambahBarcodeBaru" method="post">
+                <div class="modal-body bg-light p-4">
+                    <input type="hidden" name="noMaterial" id="barcodeNoMaterial" />
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-muted small text-uppercase mb-1">Target Material</label>
+                        <input type="text" class="form-control bg-white fw-bold text-dark border-secondary font-monospace shadow-none" id="barcodeNamaUnit" readonly style="border-style: dashed;" />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label fw-bold text-info-emphasis small text-uppercase mb-1">Tembak Scanner / Input Barcode Baru</label>
+                        <input type="text" name="barcodeBaru" class="form-control form-control-lg text-center fw-bolder border-info shadow-sm font-monospace" placeholder="Contoh: 01RAD2026001" required autocomplete="off" />
+                    </div>
+                </div>
+                <div class="modal-footer border-top p-3 bg-white">
+                    <button type="button" class="btn btn-light border fw-bold px-4" data-bs-dismiss="modal">BATAL</button>
+                    <button type="submit" class="btn btn-info px-4 fw-bold shadow-sm">SIMPAN BARCODE</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalLihatBarcode" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 0.75rem; overflow: hidden;">
+            <div class="modal-header bg-dark text-white border-0 py-3">
+                <h5 class="modal-title fw-bold text-uppercase fs-6">Daftar Barcode Fisik</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body bg-light p-0">
+                <div class="p-3 bg-white border-bottom shadow-sm">
+                    <h6 class="fw-bolder text-dark mb-0 font-monospace" id="lihatBarcodeNoMaterial"></h6>
+                    <small class="text-muted fw-semibold text-uppercase" id="lihatBarcodeNamaUnit" style="font-size: 0.7rem;"></small>
+                </div>
+                <div class="p-0" style="max-height: 300px; overflow-y: auto;">
+                    <ul class="list-group list-group-flush" id="listBarcodeContainer"></ul>
+                </div>
+            </div>
+            <div class="modal-footer border-top p-2 bg-white">
+                <button type="button" class="btn btn-sm btn-light border fw-bold w-100" data-bs-dismiss="modal">TUTUP</button>
+            </div>
+        </div>
+    </div>
+</div>

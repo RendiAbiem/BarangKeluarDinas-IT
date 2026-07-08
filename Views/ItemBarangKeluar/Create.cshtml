@@ -160,12 +160,10 @@
                 });
             }
 
-            // --- WORKFLOW 1: AUTOMATIC BARCODE SCANNING ---
             scanInputBarcode.addEventListener('keydown', function(e) {
                 if (e.key === 'Enter') {
                     e.preventDefault();
 
-                    // Penyesuaian cara membaca data dari datalist berdasarkan teks yang diketik
                     let inputValue = selectMaterial.value.trim();
                     let selectedOption = document.querySelector(`#materialDatalist option[value="${inputValue}"]`);
 
@@ -203,7 +201,6 @@
                 }
             });
 
-            // --- WORKFLOW 2: INPUT MANUAL TAMBAH BARANG ---
             btnTambahManual.addEventListener('click', function() {
                 let inputValue = selectMaterial.value.trim();
                 let selectedOption = document.querySelector(`#materialDatalist option[value="${inputValue}"]`);
