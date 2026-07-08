@@ -14,4 +14,6 @@ public class AppDbContext : DbContext
     public DbSet<MasterLokasi> MasterLokasi { get; set; }
     public DbSet<MasterPIC> MasterPIC { get; set; }
     public DbSet<MasterMaterial> MasterMaterial { get; set; }
+    public DbSet<HistoryMaterial> HistoryMaterial { get; set; }
+    public DbSet<DataBarcode> DataBarcode { get; set; }
 }

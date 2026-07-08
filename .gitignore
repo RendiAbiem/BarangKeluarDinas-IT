@@ -16,3 +16,11 @@ appsettings.Development.json
 
 # Mengabaikan file log
 *.log
+
+# Mengabaikan file database lokal
+*.db
+*.db-shm
+*.db-wal
+
+# Mengabaikan folder cache Visual Studio
+.vs/
