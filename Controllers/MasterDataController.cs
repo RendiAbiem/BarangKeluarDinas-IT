@@ -249,4 +249,128 @@ public class MasterDataController : Controller
         TempData["Success"] = $"Barcode {barcodeBaru} berhasil diikat ke material {material.NamaUnit}.";
         return RedirectToAction(nameof(Index));
     }
+
+    [HttpPost]
+    public async Task<IActionResult> TambahPIC(MasterPIC pic)
+    {
+        if (ModelState.IsValid)
+        {
+            _context.MasterPIC.Add(pic);
+            await _context.SaveChangesAsync();
+            return RedirectToAction("Index");
+        }
+        return RedirectToAction("Index");
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> TambahLokasi(MasterLokasi lokasi)
+    {
+        if (ModelState.IsValid)
+        {
+            _context.MasterLokasi.Add(lokasi);
+            await _context.SaveChangesAsync();
+            return RedirectToAction("Index");
+        }
+        return RedirectToAction("Index");
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditPIC(int id, string namaLengkap, string departemen)
+    {
+        var pic = await _context.MasterPIC.FindAsync(id);
+        if (pic != null)
+        {
+            pic.NamaLengkap = namaLengkap;
+            pic.Departemen = departemen;
+            _context.Update(pic);
+            await _context.SaveChangesAsync();
+            TempData["Success"] = "Data PIC berhasil diperbarui.";
+        }
+        return RedirectToAction(nameof(Index));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeletePIC(int id)
+    {
+        var pic = await _context.MasterPIC.FindAsync(id);
+        if (pic != null)
+        {
+            try
+            {
+                _context.MasterPIC.Remove(pic);
+                await _context.SaveChangesAsync();
+                TempData["Success"] = "Data PIC berhasil dihapus permanen.";
+            }
+            catch (Exception)
+            {
+                TempData["Error"] = "Gagal: PIC ini tidak bisa dihapus karena namanya sudah tercatat di data Tugas Dinas.";
+            }
+        }
+        return RedirectToAction(nameof(Index));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditLokasi(int id, string namaLokasi)
+    {
+        var lokasi = await _context.MasterLokasi.FindAsync(id);
+        if (lokasi != null)
+        {
+            lokasi.NamaLokasi = namaLokasi;
+            _context.Update(lokasi);
+            await _context.SaveChangesAsync();
+            TempData["Success"] = "Data Lokasi berhasil diperbarui.";
+        }
+        return RedirectToAction(nameof(Index));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteLokasi(int id)
+    {
+        var lokasi = await _context.MasterLokasi.FindAsync(id);
+        if (lokasi != null)
+        {
+            try
+            {
+                _context.MasterLokasi.Remove(lokasi);
+                await _context.SaveChangesAsync();
+                TempData["Success"] = "Data Lokasi berhasil dihapus.";
+            }
+            catch (Exception)
+            {
+                TempData["Error"] = "Gagal: Lokasi ini tidak bisa dihapus karena sudah dipakai di transaksi.";
+            }
+        }
+        return RedirectToAction(nameof(Index));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditMaterial(string noMaterialLama, string noMaterialBaru, string namaUnit, string satuan)
+    {
+        var material = await _context.MasterMaterial.FirstOrDefaultAsync(m => m.NoMaterial == noMaterialLama);
+        if (material != null)
+        {
+            // Jika user mengubah Nomor Materialnya juga (Hati-hati, ini bisa memengaruhi relasi)
+            if (noMaterialLama != noMaterialBaru)
+            {
+                var cekDuplicate = await _context.MasterMaterial.AnyAsync(m => m.NoMaterial == noMaterialBaru);
+                if (cekDuplicate)
+                {
+                    TempData["Error"] = "Gagal Edit: Nomor Material baru sudah terpakai barang lain.";
+                    return RedirectToAction(nameof(Index));
+                }
+            }
+
+            material.NamaUnit = namaUnit;
+            material.Satuan = satuan;
+            _context.Update(material);
+            await _context.SaveChangesAsync();
+            TempData["Success"] = $"Detail material {namaUnit} berhasil diperbarui.";
+        }
+        return RedirectToAction(nameof(Index));
+    }
 }

@@ -3,7 +3,6 @@
 @{
     ViewData["Title"] = "Laporan Detail Penugasan";
     var isPending = Model.SenaraiBarang != null && Model.SenaraiBarang.Any(i => i.Status == BarangKeluarDinas.Models.StatusAliranBarang.DibawaKeluar);
-    // materialList tetap kita simpan di ViewBag karena dibutuhkan oleh partial tambah material
     var materialList = ViewBag.MaterialList as List<BarangKeluarDinas.Models.MasterMaterial>;
 }
 
@@ -103,29 +102,36 @@
                                             <td class="ps-3">
                                                 <span class="fw-bold text-dark">@barang.NamaUnit</span>
                                                 <div class="small text-muted font-monospace">@barang.NoMaterial</div>
-                                                @if(!string.IsNullOrEmpty(barang.Keterangan)) {
+                                                @if (!string.IsNullOrEmpty(barang.Keterangan))
+                                                {
                                                     <div class="mt-1 small text-secondary fst-italic">Ket: @barang.Keterangan</div>
                                                 }
                                             </td>
                                             <td class="text-center fw-bold text-primary">@barang.JumlahBawa @barang.STN</td>
                                             <td class="font-monospace small">@(string.IsNullOrEmpty(barang.Barcode) ? "-" : barang.Barcode)</td>
                                             <td>
-                                                @if(barang.Status == BarangKeluarDinas.Models.StatusAliranBarang.DibawaKeluar) {
+                                                @if (barang.Status == BarangKeluarDinas.Models.StatusAliranBarang.DibawaKeluar)
+                                                {
                                                     <span class="badge bg-info text-dark">Dibawa (Pending)</span>
-                                                } else if (barang.Status == BarangKeluarDinas.Models.StatusAliranBarang.TerpakaiKategoriSRM) {
+                                                }
+                                                else if (barang.Status == BarangKeluarDinas.Models.StatusAliranBarang.TerpakaiKategoriSRM)
+                                                {
                                                     <span class="badge bg-danger">Terpakai (Lapangan)</span>
-                                                } else {
+                                                }
+                                                else
+                                                {
                                                     <span class="badge bg-success">Kembali (Gudang)</span>
                                                 }
                                             </td>
                                             <td class="text-center">
                                                 <div class="d-flex gap-1 justify-content-center">
-                                                    @if(barang.Status == BarangKeluarDinas.Models.StatusAliranBarang.DibawaKeluar) {
+                                                    @if (barang.Status == BarangKeluarDinas.Models.StatusAliranBarang.DibawaKeluar)
+                                                    {
                                                         <form asp-controller="ItemBarangKeluar" asp-action="QuickReturn" asp-route-id="@barang.Id" method="post" onsubmit="return confirm('Proses penarikan balik material utuh ke gudang?');">
                                                             <button type="submit" class="btn btn-sm btn-outline-success py-1">Tarik</button>
                                                         </form>
                                                     }
-                                                    <button type="button" class="btn btn-sm btn-outline-warning text-dark py-1 btn-buka-modal" 
+                                                    <button type="button" class="btn btn-sm btn-outline-warning text-dark py-1 btn-buka-modal"
                                                             data-bs-toggle="modal" data-bs-target="#modalLaporanMaterial"
                                                             data-id="@barang.Id"
                                                             data-tugasanid="@barang.TugasanDinasId"
@@ -192,7 +198,7 @@
                     {
                         <button class="btn btn-success w-100 fw-bold py-2" disabled>Tugas Selesai Terverifikasi</button>
                     }
-                    
+
                     <a asp-action="Index" class="btn btn-dark w-100 fw-bold py-2 mt-3 shadow-sm">&larr; Kembali ke Daftar Utama</a>
                 </div>
             </div>
@@ -206,78 +212,78 @@
 @section Scripts {
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            
+
             // ====================================================
             // LOGIKA MODAL 1: PENGELOLAAN STATUS BARANG LAPANGAN
             // ====================================================
             const modalLaporanMaterial = document.getElementById('modalLaporanMaterial');
-            
-            // Elemen Panel Waktu Logistik Aktual
+
             const modalTanggalDipakai = document.getElementById('modalTanggalDipakai');
             const modalTanggalKembali = document.getElementById('modalTanggalKembali');
             const divTanggal = document.getElementById('modalDivTanggal');
             const wrapTanggalPakai = document.getElementById('wrapTanggalPakai');
             const wrapTanggalKembali = document.getElementById('wrapTanggalKembali');
-            
+
             let currentMaxBawa = 0;
 
-            modalLaporanMaterial.addEventListener('show.bs.modal', function (event) {
-                const button = event.relatedTarget;
-                const id = button.getAttribute('data-id');
-                const tugasanId = button.getAttribute('data-tugasanid');
-                const noMaterial = button.getAttribute('data-nomaterial');
-                const namaUnit = button.getAttribute('data-namaunit');
-                const kategori = button.getAttribute('data-kategori');
-                const stn = button.getAttribute('data-stn');
-                const barcode = button.getAttribute('data-barcode');
-                const jumlahBawa = parseInt(button.getAttribute('data-jumlahbawa')) || 0;
-                const status = button.getAttribute('data-status');
-                const srm = button.getAttribute('data-srm');
-                const keterangan = button.getAttribute('data-keterangan');
-                const tglPakai = button.getAttribute('data-tanggaldipakai');
-                const tglKembali = button.getAttribute('data-tanggaldikembalikan');
+            if (modalLaporanMaterial) {
+                modalLaporanMaterial.addEventListener('show.bs.modal', function (event) {
+                    const button = event.relatedTarget;
+                    const id = button.getAttribute('data-id');
+                    const tugasanId = button.getAttribute('data-tugasanid');
+                    const noMaterial = button.getAttribute('data-nomaterial');
+                    const namaUnit = button.getAttribute('data-namaunit');
+                    const kategori = button.getAttribute('data-kategori');
+                    const stn = button.getAttribute('data-stn');
+                    const barcode = button.getAttribute('data-barcode');
+                    const jumlahBawa = parseInt(button.getAttribute('data-jumlahbawa')) || 0;
+                    const status = button.getAttribute('data-status');
+                    const srm = button.getAttribute('data-srm');
+                    const keterangan = button.getAttribute('data-keterangan');
+                    const tglPakai = button.getAttribute('data-tanggaldipakai');
+                    const tglKembali = button.getAttribute('data-tanggaldikembalikan');
 
-                currentMaxBawa = jumlahBawa;
+                    currentMaxBawa = jumlahBawa;
 
-                document.getElementById('modalId').value = id;
-                document.getElementById('modalTugasanId').value = tugasanId;
-                document.getElementById('modalNoMaterial').value = noMaterial;
-                document.getElementById('modalNamaUnitValue').value = namaUnit;
-                document.getElementById('modalKategoriAsset').value = kategori;
-                document.getElementById('modalSTN').value = stn;
-                document.getElementById('modalBarcodeValue').value = barcode;
-                document.getElementById('modalJumlahBawaValue').value = jumlahBawa;
+                    document.getElementById('modalId').value = id;
+                    document.getElementById('modalTugasanId').value = tugasanId;
+                    document.getElementById('modalNoMaterial').value = noMaterial;
+                    document.getElementById('modalNamaUnitValue').value = namaUnit;
+                    if(document.getElementById('modalKategoriAsset')) document.getElementById('modalKategoriAsset').value = kategori;
+                    document.getElementById('modalSTN').value = stn;
+                    document.getElementById('modalBarcodeValue').value = barcode;
+                    document.getElementById('modalJumlahBawaValue').value = jumlahBawa;
 
-                document.getElementById('dispNamaUnit').innerText = namaUnit;
-                document.getElementById('dispNoMaterial').innerText = noMaterial;
-                document.getElementById('dispJumlahBawa').innerText = jumlahBawa;
-                document.getElementById('dispSTN').innerText = stn;
-                document.getElementById('dispSTN2').innerText = stn;
-                document.getElementById('dispBarcode').innerText = barcode === "" ? "Tidak Ada S/N" : barcode;
+                    document.getElementById('dispNamaUnit').innerText = namaUnit;
+                    document.getElementById('dispNoMaterial').innerText = noMaterial;
+                    document.getElementById('dispJumlahBawa').innerText = jumlahBawa;
+                    document.getElementById('dispSTN').innerText = stn;
+                    if(document.getElementById('dispSTN2')) document.getElementById('dispSTN2').innerText = stn;
+                    document.getElementById('dispBarcode').innerText = barcode === "" ? "Tidak Ada S/N" : barcode;
 
-                document.getElementById('modalSRM').value = srm;
-                document.getElementById('modalKeterangan').value = keterangan;
-                
-                // Isi Value Input Waktu
-                if (modalTanggalDipakai) modalTanggalDipakai.value = tglPakai;
-                if (modalTanggalKembali) modalTanggalKembali.value = tglKembali;
+                    document.getElementById('modalSRM').value = srm;
+                    document.getElementById('modalKeterangan').value = keterangan;
 
-                let radioToSelect = document.querySelector(`input[name="Status"][value="${status}"]`);
-                if (radioToSelect) { radioToSelect.checked = true; }
+                    if (modalTanggalDipakai) modalTanggalDipakai.value = tglPakai;
+                    if (modalTanggalKembali) modalTanggalKembali.value = tglKembali;
 
-                document.getElementById('modalInputSisaKembali').value = 0;
-                document.getElementById('modalSplitWarning').innerText = "";
+                    let radioToSelect = document.querySelector(`input[name="Status"][value="${status}"]`);
+                    if (radioToSelect) { radioToSelect.checked = true; }
 
-                document.querySelectorAll('.btn-quick-tag').forEach(tag => {
-                    tag.classList.remove('btn-info', 'btn-danger', 'btn-warning', 'btn-secondary', 'text-white');
-                    if(tag.innerText.includes("Normal")) tag.classList.add('btn-outline-info');
-                    if(tag.innerText.includes("Rusak")) tag.classList.add('btn-outline-danger');
-                    if(tag.innerText.includes("Spare")) tag.classList.add('btn-outline-warning');
-                    if(tag.innerText.includes("Salah")) tag.classList.add('btn-outline-secondary');
+                    if(document.getElementById('modalInputSisaKembali')) document.getElementById('modalInputSisaKembali').value = 0;
+                    if(document.getElementById('modalSplitWarning')) document.getElementById('modalSplitWarning').innerText = "";
+
+                    document.querySelectorAll('.btn-quick-tag').forEach(tag => {
+                        tag.classList.remove('btn-info', 'btn-danger', 'btn-warning', 'btn-secondary', 'text-white');
+                        if(tag.innerText.includes("Normal")) tag.classList.add('btn-outline-info');
+                        if(tag.innerText.includes("Rusak")) tag.classList.add('btn-outline-danger');
+                        if(tag.innerText.includes("Spare")) tag.classList.add('btn-outline-warning');
+                        if(tag.innerText.includes("Salah")) tag.classList.add('btn-outline-secondary');
+                    });
+
+                    toggleSections();
                 });
-
-                toggleSections();
-            });
+            }
 
             const divDetailPemakaian = document.getElementById('modalDivDetailPemakaian');
             const wrapperAutoSplit = document.getElementById('modalWrapperAutoSplit');
@@ -290,50 +296,51 @@
             function toggleSections() {
                 const checkedRadio = document.querySelector('input[name="Status"]:checked');
                 const statusVal = checkedRadio ? checkedRadio.value : '';
-                let sisa = parseInt(inputSisaKembali.value) || 0;
-                
+                let sisa = inputSisaKembali ? (parseInt(inputSisaKembali.value) || 0) : 0;
+
                 if (statusVal === 'TerpakaiKategoriSRM') {
-                    divDetailPemakaian.style.display = 'block';
-                    if (currentMaxBawa > 1) wrapperAutoSplit.style.display = 'block';
-                    
+                    if (divDetailPemakaian) divDetailPemakaian.style.display = 'block';
+                    if (wrapperAutoSplit && currentMaxBawa > 1) wrapperAutoSplit.style.display = 'block';
+
                     if (divTanggal) divTanggal.style.display = 'block';
                     if (wrapTanggalPakai) wrapTanggalPakai.style.display = 'block';
                     if (wrapTanggalKembali) wrapTanggalKembali.style.display = sisa > 0 ? 'block' : 'none';
 
                 } else if (statusVal === 'KembaliGudangIT') {
-                    divDetailPemakaian.style.display = 'none';
-                    wrapperAutoSplit.style.display = 'none';
-                    inputSisaKembali.value = 0; 
-                    splitWarning.innerText = "";
+                    if (divDetailPemakaian) divDetailPemakaian.style.display = 'none';
+                    if (wrapperAutoSplit) wrapperAutoSplit.style.display = 'none';
+                    if (inputSisaKembali) inputSisaKembali.value = 0;
+                    if (splitWarning) splitWarning.innerText = "";
 
                     if (divTanggal) divTanggal.style.display = 'block';
                     if (wrapTanggalPakai) wrapTanggalPakai.style.display = 'none';
                     if (wrapTanggalKembali) wrapTanggalKembali.style.display = 'block';
 
                 } else {
-                    // Status Pending
-                    divDetailPemakaian.style.display = 'none';
-                    wrapperAutoSplit.style.display = 'none';
-                    inputSisaKembali.value = 0; 
-                    splitWarning.innerText = "";
-                    
+                    if (divDetailPemakaian) divDetailPemakaian.style.display = 'none';
+                    if (wrapperAutoSplit) wrapperAutoSplit.style.display = 'none';
+                    if (inputSisaKembali) inputSisaKembali.value = 0;
+                    if (splitWarning) splitWarning.innerText = "";
+
                     if (divTanggal) divTanggal.style.display = 'none';
                 }
             }
 
             statusRadios.forEach(radio => { radio.addEventListener('change', toggleSections); });
 
-            inputSisaKembali.addEventListener('input', function() {
-                let sisa = parseInt(this.value) || 0;
-                if (sisa < 0) this.value = 0;
-                if (sisa >= currentMaxBawa) {
-                    splitWarning.innerText = "Sisa kembali tidak boleh menyamai kuantitas bawaan.";
-                    this.value = currentMaxBawa - 1; 
-                } else {
-                    splitWarning.innerText = ""; 
-                }
-                toggleSections(); // Panggil ulang untuk memunculkan kolom Waktu Kembali jika ada sisa
-            });
+            if (inputSisaKembali) {
+                inputSisaKembali.addEventListener('input', function() {
+                    let sisa = parseInt(this.value) || 0;
+                    if (sisa < 0) this.value = 0;
+                    if (sisa >= currentMaxBawa) {
+                        splitWarning.innerText = "Sisa kembali tidak boleh menyamai kuantitas bawaan.";
+                        this.value = currentMaxBawa - 1;
+                    } else {
+                        splitWarning.innerText = "";
+                    }
+                    toggleSections();
+                });
+            }
 
             quickTags.forEach(tag => {
                 tag.addEventListener('click', function() {
@@ -349,156 +356,6 @@
                     this.classList.add('text-white');
                 });
             });
-
-
-            // ====================================================
-            // LOGIKA MODAL 2: SCANNER POS KASIR TAMBAH BARANG BARU
-            // ====================================================
-            let keranjangTambahan = [];
-            const selectMaterial = document.getElementById('addSelectMaterial');
-            const manualQty = document.getElementById('addManualQty');
-            const barcodeContainer = document.getElementById('addBarcodeInputsContainer');
-            const btnTambahItem = document.getElementById('addBtnTambahItem');
-            const cartBody = document.getElementById('addCartBody');
-            const hiddenJson = document.getElementById('addHiddenItemsJson');
-            const formTambah = document.getElementById('formTambahMaterialUtama');
-
-            function renderBarcodeInputs() {
-                let qty = parseInt(manualQty.value) || 1;
-                if (qty < 1) { qty = 1; manualQty.value = 1; }
-                
-                let currentInputs = document.querySelectorAll('.add-barcode-input');
-                let savedValues = [];
-                currentInputs.forEach(inp => savedValues.push(inp.value));
-
-                barcodeContainer.innerHTML = '';
-                for (let i = 0; i < qty; i++) {
-                    let val = savedValues[i] || '';
-                    let html = `<input type="text" class="form-control font-monospace border-danger mb-2 add-barcode-input" placeholder="Scan barcode fisik ke-${i+1}..." value="${val}" />`;
-                    barcodeContainer.insertAdjacentHTML('beforeend', html);
-                }
-
-                let newInputs = document.querySelectorAll('.add-barcode-input');
-                newInputs.forEach((inp, idx) => {
-                    inp.addEventListener('keydown', function(e) {
-                        if (e.key === 'Enter') {
-                            e.preventDefault();
-                            if (idx < newInputs.length - 1) newInputs[idx + 1].focus();
-                            else prosesMasukKeranjang();
-                        }
-                    });
-                });
-            }
-
-            manualQty.addEventListener('input', renderBarcodeInputs);
-            renderBarcodeInputs();
-
-            function hitungQtyDiKeranjang(noMaterial) {
-                return keranjangTambahan.filter(i => i.NoMaterial === noMaterial).reduce((s, i) => s + i.JumlahBawa, 0);
-            }
-
-            function renderKeranjangTambahan() {
-                cartBody.innerHTML = '';
-                if (keranjangTambahan.length === 0) {
-                    cartBody.innerHTML = `<tr><td colspan="4" class="text-center text-muted fst-italic py-3">Belum ada barang tambahan di keranjang.</td></tr>`;
-                    return;
-                }
-                keranjangTambahan.forEach((item, index) => {
-                    let row = `
-                        <tr>
-                            <td class="small fw-bold">${item.NamaUnit}<br><span class="text-muted font-monospace" style="font-size:0.75rem;">${item.NoMaterial}</span></td>
-                            <td class="text-center fw-bold text-primary">${item.JumlahBawa} ${item.STN}</td>
-                            <td class="font-monospace small">${item.Barcode || '-'}</td>
-                            <td class="text-center">
-                                <button type="button" class="btn btn-sm btn-link text-danger btn-hapus-add" data-index="${index}">Hapus</button>
-                            </td>
-                        </tr>`;
-                    cartBody.insertAdjacentHTML('beforeend', row);
-                });
-
-                document.querySelectorAll('.btn-hapus-add').forEach(btn => {
-                    btn.addEventListener('click', function() {
-                        let idx = this.getAttribute('data-index');
-                        keranjangTambahan.splice(idx, 1);
-                        renderKeranjangTambahan();
-                    });
-                });
-            }
-
-            function prosesMasukKeranjang() {
-                let matVal = selectMaterial.value.trim();
-                let option = document.querySelector(`#addMaterialDatalist option[value="${matVal}"]`);
-                if (!option) {
-                    alert("Silakan tentukan material utama dari datalist.");
-                    selectMaterial.focus();
-                    return;
-                }
-
-                let qtyInput = parseInt(manualQty.value) || 1;
-                let maxStok = parseInt(option.getAttribute('data-stok')) || 0;
-                let qtySekarang = hitungQtyDiKeranjang(matVal);
-
-                if (qtySekarang + qtyInput > maxStok) {
-                    alert(`Gagal! Total request melampaui sisa stok gudang IT.\nSisa Stok: ${maxStok}`);
-                    return;
-                }
-
-                let inputs = document.querySelectorAll('.add-barcode-input');
-                let blankCount = 0;
-
-                inputs.forEach(inp => {
-                    let bc = inp.value.trim();
-                    if (bc !== "") {
-                        let duplicate = keranjangTambahan.some(i => i.Barcode === bc);
-                        if (duplicate) alert(`S/N "${bc}" ganda di keranjang sementara.`);
-                        else {
-                            keranjangTambahan.push({
-                                NoMaterial: matVal,
-                                NamaUnit: option.getAttribute('data-nama'),
-                                KategoriAsset: option.getAttribute('data-kategori'),
-                                JumlahBawa: 1,
-                                STN: option.getAttribute('data-stn'),
-                                Barcode: bc
-                            });
-                        }
-                    } else {
-                        blankCount++;
-                    }
-                });
-
-                if (blankCount > 0) {
-                    let exist = keranjangTambahan.find(i => i.NoMaterial === matVal && !i.Barcode);
-                    if (exist) exist.JumlahBawa += blankCount;
-                    else {
-                        keranjangTambahan.push({
-                            NoMaterial: matVal,
-                            NamaUnit: option.getAttribute('data-nama'),
-                            KategoriAsset: option.getAttribute('data-kategori'),
-                            JumlahBawa: blankCount,
-                            STN: option.getAttribute('data-stn'),
-                            Barcode: null
-                        });
-                    }
-                }
-
-                selectMaterial.value = '';
-                manualQty.value = '1';
-                renderBarcodeInputs();
-                renderKeranjangTambahan();
-                selectMaterial.focus();
-            }
-
-            btnTambahItem.addEventListener('click', prosesMasukKeranjang);
-
-            formTambah.addEventListener('submit', function(e) {
-                if (keranjangTambahan.length === 0) {
-                    e.preventDefault();
-                    alert("Keranjang tambahan Anda masih kosong.");
-                    return;
-                }
-                hiddenJson.value = JSON.stringify(keranjangTambahan);
-            });
-
         });
     </script>
 }

@@ -264,71 +264,85 @@
                 });
             }
 
-            function tambahMaterialKeDaftar() {
-                let inputValue = selectMaterial.value.trim();
-                let selectedOption = document.querySelector(`#materialDatalist option[value="${inputValue}"]`);
+        function tambahMaterialKeDaftar() {
+                        let inputValue = selectMaterial.value.trim();
 
-                if (!selectedOption) {
-                    alert("Silakan pilih material utama yang valid dari daftar terlebih dahulu.");
-                    selectMaterial.focus();
-                    return;
-                }
-
-                let qtyInput = parseInt(manualQty.value) || 1;
-                let stokMaksimal = parseInt(selectedOption.getAttribute('data-stok')) || 0;
-                let qtySekarang = hitungQtyDiKeranjang(inputValue);
-
-                if (qtySekarang + qtyInput > stokMaksimal) {
-                    alert(`Gagal menambah barang: Kuantitas melebihi sisa stok gudang.\nStok Gudang: ${stokMaksimal}\nSudah di Keranjang: ${qtySekarang}`);
-                    return;
-                }
-
-                let newInputs = document.querySelectorAll('.barcode-input');
-                let jumlahTanpaBarcode = 0;
-
-                newInputs.forEach(input => {
-                    let bc = input.value.trim();
-                    if (bc !== "") {
-                        let isDuplicate = keranjang.some(item => item.Barcode === bc);
-                        if (isDuplicate) {
-                            alert(`PERINGATAN: S/N "${bc}" sudah ada di keranjang dan akan dilewati.`);
-                        } else {
-                            keranjang.push({
-                                NoMaterial: inputValue,
-                                NamaUnit: selectedOption.getAttribute('data-nama'),
-                                KategoriAsset: selectedOption.getAttribute('data-kategori'),
-                                JumlahBawa: 1, 
-                                STN: selectedOption.getAttribute('data-stn'),
-                                Barcode: bc
-                            });
+                        if (inputValue === "") {
+                            alert("Silakan ketik atau pilih material terlebih dahulu.");
+                            selectMaterial.focus();
+                            return;
                         }
-                    } else {
-                        jumlahTanpaBarcode++;
-                    }
-                });
 
-                if (jumlahTanpaBarcode > 0) {
-                    let existingItem = keranjang.find(item => item.NoMaterial === inputValue && !item.Barcode);
-                    if (existingItem) {
-                        existingItem.JumlahBawa += jumlahTanpaBarcode;
-                    } else {
-                        keranjang.push({
-                            NoMaterial: inputValue,
-                            NamaUnit: selectedOption.getAttribute('data-nama'),
-                            KategoriAsset: selectedOption.getAttribute('data-kategori'),
-                            JumlahBawa: jumlahTanpaBarcode,
-                            STN: selectedOption.getAttribute('data-stn'),
-                            Barcode: null
+                        // [PERBAIKAN]: Pencarian pintar (Bisa mendeteksi NoMaterial ATAU NamaUnit)
+                        let options = document.querySelectorAll('#materialDatalist option');
+                        let selectedOption = Array.from(options).find(opt =>
+                            opt.value === inputValue ||
+                            opt.getAttribute('data-nama') === inputValue ||
+                            inputValue.includes(opt.value) // Handle jika browser memasukkan teks panjang
+                        );
+
+                        if (!selectedOption) {
+                            alert("Silakan pilih material utama yang valid dari daftar terlebih dahulu.");
+                            selectMaterial.focus();
+                            return;
+                        }
+
+                        // Kunci input value ke Nomor Material yang asli dari database
+                        inputValue = selectedOption.value;
+
+                        let qtyInput = parseInt(manualQty.value) || 1;
+                        let stokMaksimal = parseInt(selectedOption.getAttribute('data-stok')) || 0;
+                        let qtySekarang = hitungQtyDiKeranjang(inputValue);
+
+                        if (qtySekarang + qtyInput > stokMaksimal) {
+                            alert(`Gagal menambah barang: Kuantitas melebihi sisa stok gudang.\nStok Gudang: ${stokMaksimal}\nSudah di Keranjang: ${qtySekarang}`);
+                            return;
+                        }
+
+                        let newInputs = document.querySelectorAll('.barcode-input');
+                        let jumlahTanpaBarcode = 0;
+
+                        newInputs.forEach(input => {
+                            let bc = input.value.trim();
+                            if (bc !== "") {
+                                let isDuplicate = keranjang.some(item => item.Barcode === bc);
+                                if (isDuplicate) {
+                                    alert(`PERINGATAN: S/N "${bc}" sudah ada di keranjang dan akan dilewati.`);
+                                } else {
+                                    keranjang.push({
+                                        NoMaterial: inputValue,
+                                        NamaUnit: selectedOption.getAttribute('data-nama'),
+                                        JumlahBawa: 1,
+                                        STN: selectedOption.getAttribute('data-stn'),
+                                        Barcode: bc
+                                    });
+                                }
+                            } else {
+                                jumlahTanpaBarcode++;
+                            }
                         });
-                    }
-                }
 
-                selectMaterial.value = '';
-                manualQty.value = '1';
-                renderBarcodeInputs();
-                renderKeranjang();
-                selectMaterial.focus();
-            }
+                        if (jumlahTanpaBarcode > 0) {
+                            let existingItem = keranjang.find(item => item.NoMaterial === inputValue && !item.Barcode);
+                            if (existingItem) {
+                                existingItem.JumlahBawa += jumlahTanpaBarcode;
+                            } else {
+                                keranjang.push({
+                                    NoMaterial: inputValue,
+                                    NamaUnit: selectedOption.getAttribute('data-nama'),
+                                    JumlahBawa: jumlahTanpaBarcode,
+                                    STN: selectedOption.getAttribute('data-stn'),
+                                    Barcode: null
+                                });
+                            }
+                        }
+
+                        selectMaterial.value = '';
+                        manualQty.value = '1';
+                        renderBarcodeInputs();
+                        renderKeranjang();
+                        selectMaterial.focus();
+                    }
 
             btnTambahItem.addEventListener('click', tambahMaterialKeDaftar);
 

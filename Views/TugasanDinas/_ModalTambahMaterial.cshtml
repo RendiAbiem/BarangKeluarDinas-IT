@@ -1,4 +1,3 @@
-<!-- Views/TugasanDinas/_ModalTambahMaterial.cshtml -->
 @model BarangKeluarDinas.Models.TugasanDinas
 @{
     var materialList = ViewBag.MaterialList as List<BarangKeluarDinas.Models.MasterMaterial>;
@@ -20,9 +19,9 @@
                         <label class="form-label fw-bold text-secondary">Pilih Material Tambahan</label>
                         <input type="text" class="form-control border-dark" id="addSelectMaterial" list="addMaterialDatalist" placeholder="Ketik nama atau nomor urut material..." />
                         <datalist id="addMaterialDatalist">
-                            @if(materialList != null)
+                            @if (materialList != null)
                             {
-                                foreach(var item in materialList.Where(m => m.Status == "Y"))
+                                foreach (var item in materialList.Where(m => m.Status == "Y"))
                                 {
                                     <option value="@item.NoMaterial" data-nama="@item.NamaUnit" data-stn="@item.Satuan" data-stok="@item.Jumlah">
                                         @item.NamaUnit (@item.NoMaterial) - Stok Gudang: @item.Jumlah
@@ -70,3 +69,200 @@
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        let addKeranjang = [];
+
+        const addSelectMaterial = document.getElementById('addSelectMaterial');
+        const addManualQty = document.getElementById('addManualQty');
+        const addBarcodeInputsContainer = document.getElementById('addBarcodeInputsContainer');
+        const addBtnTambahItem = document.getElementById('addBtnTambahItem');
+        const addCartBody = document.getElementById('addCartBody');
+        const addHiddenItemsJson = document.getElementById('addHiddenItemsJson');
+        const formTambahMaterialUtama = document.getElementById('formTambahMaterialUtama');
+        const modalElement = document.getElementById('modalTambahMaterial');
+
+        function hitungAddQtyDiKeranjang(noMaterial) {
+            return addKeranjang
+                .filter(item => item.NoMaterial === noMaterial)
+                .reduce((sum, item) => sum + item.JumlahBawa, 0);
+        }
+
+        function renderAddBarcodeInputs() {
+            let qty = parseInt(addManualQty.value) || 1;
+            if (qty < 1) { qty = 1; addManualQty.value = 1; }
+            if (qty > 30) { alert("Maksimal 30 unit sekali input."); qty = 30; addManualQty.value = 30; }
+
+            let currentInputs = document.querySelectorAll('.add-barcode-input');
+            let savedValues = [];
+            currentInputs.forEach(input => savedValues.push(input.value));
+
+            addBarcodeInputsContainer.innerHTML = '';
+            for (let i = 0; i < qty; i++) {
+                let val = savedValues[i] || '';
+                let inputHTML = `
+                    <div class="input-group mb-2 shadow-sm">
+                        <span class="input-group-text bg-white border-danger text-danger">S/N</span>
+                        <input type="text" class="form-control font-monospace border-danger add-barcode-input" placeholder="Tembak S/N unit ke-${i+1}..." value="${val}" autocomplete="off" />
+                    </div>
+                `;
+                addBarcodeInputsContainer.insertAdjacentHTML('beforeend', inputHTML);
+            }
+
+            let newInputs = document.querySelectorAll('.add-barcode-input');
+            newInputs.forEach((input, index) => {
+                input.addEventListener('keydown', function (e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (index < newInputs.length - 1) {
+                            newInputs[index + 1].focus();
+                        } else {
+                            tambahMaterialKeDaftarAdd();
+                        }
+                    }
+                });
+            });
+        }
+
+        addManualQty.addEventListener('input', renderAddBarcodeInputs);
+        renderAddBarcodeInputs();
+
+        function renderAddKeranjang() {
+            addCartBody.innerHTML = '';
+            if (addKeranjang.length === 0) {
+                addCartBody.innerHTML = `<tr><td colspan="4" class="text-center text-muted fst-italic py-3">Belum ada barang tambahan di keranjang.</td></tr>`;
+                return;
+            }
+
+            addKeranjang.forEach((item, index) => {
+                let row = `
+                    <tr>
+                        <td class="align-middle small fw-bold">${item.NamaUnit}<br><span class="text-muted font-monospace" style="font-size:0.75rem;">${item.NoMaterial}</span></td>
+                        <td class="text-center align-middle fw-bold text-primary">${item.JumlahBawa} ${item.STN}</td>
+                        <td class="align-middle font-monospace small">${item.Barcode || '-'}</td>
+                        <td class="text-center align-middle">
+                            <button type="button" class="btn btn-sm btn-link text-danger btn-hapus-add-item" data-index="${index}">Hapus</button>
+                        </td>
+                    </tr>
+                `;
+                addCartBody.insertAdjacentHTML('beforeend', row);
+            });
+
+            document.querySelectorAll('.btn-hapus-add-item').forEach(button => {
+                button.addEventListener('click', function () {
+                    let idx = this.getAttribute('data-index');
+                    addKeranjang.splice(idx, 1);
+                    renderAddKeranjang();
+                });
+            });
+        }
+
+        function tambahMaterialKeDaftarAdd() {
+            // [PERBAIKAN] Ubah jadi huruf kecil semua untuk pencarian kebal typo
+            let inputValueRaw = addSelectMaterial.value.trim();
+            let inputValue = inputValueRaw.toLowerCase();
+
+            if (inputValueRaw === "") {
+                alert("Silakan ketik atau pilih material terlebih dahulu.");
+                addSelectMaterial.focus();
+                return;
+            }
+
+            // [PERBAIKAN] SMART SEARCH: Kebal Huruf Besar/Kecil & Spasi ekstra
+            let options = document.querySelectorAll('#addMaterialDatalist option');
+            let selectedOption = Array.from(options).find(opt => {
+                let optVal = (opt.value || '').trim().toLowerCase();
+                let optNama = (opt.getAttribute('data-nama') || '').trim().toLowerCase();
+
+                return optVal === inputValue ||
+                       optNama === inputValue ||
+                       inputValue.includes(optVal);
+            });
+
+            if (!selectedOption) {
+                // Teks error diubah agar lebih jelas
+                alert("GAGAL: Material tidak ditemukan di sistem. Pastikan Anda memilih dari daftar Dropdown/Datalist.");
+                addSelectMaterial.focus();
+                return;
+            }
+
+            // Kembalikan ke value asli (Nomor Material dari database)
+            inputValue = selectedOption.value;
+
+            let qtyInput = parseInt(addManualQty.value) || 1;
+            let stokMaksimal = parseInt(selectedOption.getAttribute('data-stok')) || 0;
+            let qtySekarang = hitungAddQtyDiKeranjang(inputValue);
+
+            if (qtySekarang + qtyInput > stokMaksimal) {
+                alert(`Gagal menambah barang: Kuantitas melebihi sisa stok gudang.\nStok Gudang: ${stokMaksimal}\nSudah di Keranjang: ${qtySekarang}`);
+                return;
+            }
+
+            let newInputs = document.querySelectorAll('.add-barcode-input');
+            let jumlahTanpaBarcode = 0;
+
+            newInputs.forEach(input => {
+                let bc = input.value.trim();
+                if (bc !== "") {
+                    let isDuplicate = addKeranjang.some(item => item.Barcode === bc);
+                    if (isDuplicate) {
+                        alert(`PERINGATAN: S/N "${bc}" sudah ada di keranjang dan akan dilewati.`);
+                    } else {
+                        addKeranjang.push({
+                            NoMaterial: inputValue,
+                            NamaUnit: selectedOption.getAttribute('data-nama'),
+                            JumlahBawa: 1,
+                            STN: selectedOption.getAttribute('data-stn'),
+                            Barcode: bc
+                        });
+                    }
+                } else {
+                    jumlahTanpaBarcode++;
+                }
+            });
+
+            if (jumlahTanpaBarcode > 0) {
+                let existingItem = addKeranjang.find(item => item.NoMaterial === inputValue && !item.Barcode);
+                if (existingItem) {
+                    existingItem.JumlahBawa += jumlahTanpaBarcode;
+                } else {
+                    addKeranjang.push({
+                        NoMaterial: inputValue,
+                        NamaUnit: selectedOption.getAttribute('data-nama'),
+                        JumlahBawa: jumlahTanpaBarcode,
+                        STN: selectedOption.getAttribute('data-stn'),
+                        Barcode: null
+                    });
+                }
+            }
+
+            addSelectMaterial.value = '';
+            addManualQty.value = '1';
+            renderAddBarcodeInputs();
+            renderAddKeranjang();
+            addSelectMaterial.focus();
+        }
+
+        addBtnTambahItem.addEventListener('click', tambahMaterialKeDaftarAdd);
+
+        formTambahMaterialUtama.addEventListener('submit', function (e) {
+            if (addKeranjang.length === 0) {
+                e.preventDefault();
+                alert("Gagal menyimpan: Keranjang material tambahan masih kosong.");
+                return;
+            }
+            addHiddenItemsJson.value = JSON.stringify(addKeranjang);
+        });
+
+        if(modalElement) {
+            modalElement.addEventListener('hidden.bs.modal', function () {
+                addKeranjang = [];
+                renderAddKeranjang();
+                addSelectMaterial.value = '';
+                addManualQty.value = '1';
+                renderAddBarcodeInputs();
+            });
+        }
+    });
+</script>

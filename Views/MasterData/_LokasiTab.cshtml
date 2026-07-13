@@ -35,22 +35,58 @@
                         <thead class="table-light position-sticky top-0 shadow-sm">
                             <tr>
                                 <th class="ps-4" style="width: 100px;">ID TIER</th>
-                                <th class="pe-4">NAMA SITE / LOKASI TERDAFTAR</th>
+                                <th>NAMA SITE / LOKASI TERDAFTAR</th>
+                                <th class="text-center pe-4" style="width: 150px;">AKSI</th>
                             </tr>
                         </thead>
                         <tbody>
                             @if (ViewBag.ListLokasi != null && ((List<MasterLokasi>)ViewBag.ListLokasi).Any())
                             {
-                                foreach(var item in ViewBag.ListLokasi) {
+                                foreach (var item in ViewBag.ListLokasi)
+                                {
                                     <tr>
                                         <td class="ps-4 text-muted font-monospace fw-bold">#@item.Id.ToString("D3")</td>
-                                        <td class="fw-bolder text-dark pe-4">@item.NamaLokasi</td>
+                                        <td class="fw-bolder text-dark">@item.NamaLokasi</td>
+                                        <td class="text-center pe-4">
+                                            <div class="d-flex justify-content-center gap-1">
+                                                <button type="button" class="btn btn-xs btn-outline-primary border-2 shadow-sm" data-bs-toggle="modal" data-bs-target="#modalEditLokasi-@item.Id">Edit</button>
+
+                                                <form asp-action="DeleteLokasi" method="post" class="m-0">
+                                                    <input type="hidden" name="id" value="@item.Id" />
+                                                    <button type="submit" class="btn btn-xs btn-outline-danger border-2 shadow-sm" onclick="return confirm('Apakah Anda yakin ingin menghapus lokasi @item.NamaLokasi secara permanen?');">Hapus</button>
+                                                </form>
+                                            </div>
+                                        </td>
                                     </tr>
+
+                                    <div class="modal fade" id="modalEditLokasi-@item.Id" tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content border-0 shadow-lg" style="border-radius: 0.75rem; overflow: hidden;">
+                                                <div class="modal-header bg-danger text-white border-0 py-3">
+                                                    <h6 class="modal-title fw-bold text-uppercase" style="font-size: 0.85rem;">Edit Data Lokasi</h6>
+                                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <form asp-action="EditLokasi" method="post">
+                                                    <div class="modal-body bg-light p-4">
+                                                        <input type="hidden" name="id" value="@item.Id" />
+                                                        <div class="mb-3 text-start">
+                                                            <label class="form-label fw-bold small text-muted text-uppercase mb-1">Nama Lokasi / Area</label>
+                                                            <input type="text" name="namaLokasi" class="form-control fw-bold border-secondary shadow-none" value="@item.NamaLokasi" required />
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer bg-white border-top p-3">
+                                                        <button type="button" class="btn btn-light border fw-bold px-4" data-bs-dismiss="modal">Batal</button>
+                                                        <button type="submit" class="btn btn-danger fw-bold px-4 shadow-sm">Simpan Perubahan</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
                                 }
                             }
                             else
                             {
-                                <tr><td colspan="2" class="text-center text-muted fst-italic py-5">Database lokasi kosong.</td></tr>
+                                <tr><td colspan="3" class="text-center text-muted fst-italic py-5">Database lokasi kosong.</td></tr>
                             }
                         </tbody>
                     </table>
