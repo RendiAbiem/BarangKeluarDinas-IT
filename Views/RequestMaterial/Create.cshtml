@@ -1,0 +1,184 @@
+﻿@model BarangKeluarDinas.Models.RequestMaterial
+@{
+    ViewData["Title"] = "Form Pengajuan Material";
+    var materialList = ViewBag.MaterialList as List<BarangKeluarDinas.Models.MasterMaterial>;
+}
+
+<div class="container mt-4 mb-5" style="max-width: 800px;">
+    <div class="card shadow border-0">
+        <div class="card-header bg-dark text-white py-3">
+            <h5 class="mb-0 fw-bold">Form Pengajuan Kebutuhan Material (SPOKE / IT)</h5>
+            <small class="text-white-50">Gunakan form ini untuk meminta restok barang habis atau pengadaan unit inventaris baru.</small>
+        </div>
+        <div class="card-body bg-light p-4">
+            <form asp-action="Create" method="post" id="formRequestMaterial">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label asp-for="NamaPemohon" class="form-label fw-bold text-secondary">Nama Pemohon</label>
+                        <input asp-for="NamaPemohon" class="form-control border-secondary shadow-none" placeholder="Ketik nama Anda..." required />
+                        <span asp-validation-for="NamaPemohon" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Departemen" class="form-label fw-bold text-secondary">Departemen / Divisi</label>
+                        <select asp-for="Departemen" class="form-select border-secondary shadow-none fw-bold">
+                            <option value="IT CORE">IT CORE Gudang</option>
+                            <option value="SPOKE FIELD">SPOKE Lapangan</option>
+                            <option value="Dinas Luar">Dinas Logistik</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mb-4 p-3 bg-white rounded border border-secondary border-opacity-25 shadow-sm">
+                    <label class="form-label fw-bold d-block text-dark mb-2">Kategori Pengadaan Barang</label>
+                    <div class="form-check form-check-inline me-4">
+                        <input class="form-check-input border-dark" type="radio" asp-for="JenisRequest" id="radioBarangLama" value="Barang Lama" checked>
+                        <label class="form-check-label fw-bold text-primary" for="radioBarangLama">Barang Lama (Sudah Pernah Ada di Gudang / Restok)</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input border-dark" type="radio" asp-for="JenisRequest" id="radioBarangBaru" value="Barang Baru">
+                        <label class="form-check-label fw-bold text-success" for="radioBarangBaru">Barang Baru (Belum Pernah Terdaftar di Gudang)</label>
+                    </div>
+                </div>
+
+                <div id="wrapperBarangLama" class="mb-3">
+                    <label class="form-label fw-bold text-primary">Cari & Pilih Material Gudang Utama</label>
+                    <input type="text" class="form-control border-primary shadow-none fw-bold" id="searchMaterialGudang" placeholder="Ketik nama barang atau nomor material lama..." />
+                    <input type="hidden" asp-for="NoMaterial" id="hiddenNoMaterial" />
+
+                    <datalist id="requestMaterialDatalist">
+                        @if (materialList != null)
+                        {
+                            foreach (var item in materialList)
+                            {
+                                <option value="@item.NoMaterial" data-nama="@item.NamaUnit" data-stn="@item.Satuan" data-stok="@item.Jumlah">
+                                    @item.NamaUnit (@item.NoMaterial) - Sisa Stok Gudang: @item.Jumlah
+                                </option>
+                            }
+                        }
+                    </datalist>
+                </div>
+
+                <div class="card p-3 border-secondary border-opacity-20 mb-4 bg-white">
+                    <div class="mb-3">
+                        <label asp-for="NamaBarang" class="form-label fw-bold text-secondary">Spesifikasi Lengkap / Nama Unit</label>
+                        <input asp-for="NamaBarang" class="form-control border-dark shadow-none" id="inputNamaBarang" placeholder="Contoh: Switch Hub TP-Link 16 Port" required />
+                        <span asp-validation-for="NamaBarang" class="text-danger small"></span>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label asp-for="Jumlah" class="form-label fw-bold text-secondary">Jumlah Pengadaan</label>
+                            <input asp-for="Jumlah" type="number" class="form-control border-dark shadow-none text-center fw-bold fs-5" min="1" value="1" required />
+                            <span asp-validation-for="Jumlah" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Satuan" class="form-label fw-bold text-secondary">Satuan Ukur (STN)</label>
+                            <input asp-for="Satuan" class="form-control border-dark shadow-none text-uppercase fw-bold" id="inputSatuan" placeholder="pcs / rol / mtr" required />
+                            <span asp-validation-for="Satuan" class="text-danger small"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label asp-for="AlasanKebutuhan" class="form-label fw-bold text-secondary">Alasan Kebutuhan / Keterangan Project</label>
+                    <textarea asp-for="AlasanKebutuhan" class="form-control border-secondary shadow-none" rows="3" placeholder="Jelaskan secara rinci alasan permintaan barang (contoh: untuk penggantian perangkat rusak di Site A)..." required></textarea>
+                    <span asp-validation-for="AlasanKebutuhan" class="text-danger small"></span>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 border-top pt-3">
+                    <button type="button" class="btn btn-outline-secondary px-4 fw-bold" onclick="history.back()">Batal</button>
+                    <button type="submit" class="btn btn-dark px-5 fw-bold shadow">Kirim Pengajuan Request</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const radioBarangLama = document.getElementById('radioBarangLama');
+            const radioBarangBaru = document.getElementById('radioBarangBaru');
+
+            const wrapperBarangLama = document.getElementById('wrapperBarangLama');
+            const searchMaterialGudang = document.getElementById('searchMaterialGudang');
+            const hiddenNoMaterial = document.getElementById('hiddenNoMaterial');
+
+            const inputNamaBarang = document.getElementById('inputNamaBarang');
+            const inputSatuan = document.getElementById('inputSatuan');
+
+            // Aktifkan datalist bawaan sistem ke input cari
+            searchMaterialGudang.setAttribute('list', 'requestMaterialDatalist');
+
+            function handleFormSwitch() {
+                if (radioBarangLama.checked) {
+                    // MODE BARANG LAMA: Tampilkan kotak cari, kunci nama & satuan agar auto-fill
+                    wrapperBarangLama.style.display = 'block';
+                    searchMaterialGudang.required = true;
+
+                    inputNamaBarang.readOnly = true;
+                    inputSatuan.readOnly = true;
+                    inputNamaBarang.classList.add('bg-light');
+                    inputSatuan.classList.add('bg-light');
+                } else {
+                    // MODE BARANG BARU: Sembunyikan pencarian gudang, bebaskan input manual teks biasa
+                    wrapperBarangLama.style.display = 'none';
+                    searchMaterialGudang.required = false;
+
+                    // Reset value
+                    searchMaterialGudang.value = '';
+                    hiddenNoMaterial.value = '';
+                    inputNamaBarang.value = '';
+                    inputSatuan.value = '';
+
+                    inputNamaBarang.readOnly = false;
+                    inputSatuan.readOnly = false;
+                    inputNamaBarang.classList.remove('bg-light');
+                    inputSatuan.classList.remove('bg-light');
+                }
+            }
+
+            radioBarangLama.addEventListener('change', handleFormSwitch);
+            radioBarangBaru.addEventListener('change', handleFormSwitch);
+            handleFormSwitch(); // Jalankan inisialisasi awal saat halaman dimuat
+
+            // LOGIKA PEMINDAIAN SMART SEARCH PADA DATALIST BARANG LAMA
+            searchMaterialGudang.addEventListener('input', function () {
+                let inputVal = this.value.trim().toLowerCase();
+                if(inputVal === "") {
+                    hiddenNoMaterial.value = '';
+                    inputNamaBarang.value = '';
+                    inputSatuan.value = '';
+                    return;
+                }
+
+                let options = document.querySelectorAll('#requestMaterialDatalist option');
+                let foundOption = Array.from(options).find(opt => {
+                    let optVal = (opt.value || '').trim().toLowerCase();
+                    let optNama = (opt.getAttribute('data-nama') || '').trim().toLowerCase();
+                    return optVal === inputVal || optNama === inputVal || inputVal.includes(optVal);
+                });
+
+                if (foundOption) {
+                    // Jika terdeteksi kecocokan, kunci datanya
+                    hiddenNoMaterial.value = foundOption.value;
+                    this.value = foundOption.value; // Tampilkan no material di bar pencarian
+                    inputNamaBarang.value = foundOption.getAttribute('data-nama');
+                    inputSatuan.value = foundOption.getAttribute('data-stn');
+                } else {
+                    // Kosongkan detail jika mengetik manual yang salah
+                    hiddenNoMaterial.value = '';
+                    inputNamaBarang.value = '';
+                    inputSatuan.value = '';
+                }
+            });
+        });
+    </script>
+}

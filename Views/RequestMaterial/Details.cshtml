@@ -1,0 +1,129 @@
+﻿@model BarangKeluarDinas.Models.RequestMaterial
+@{
+    ViewData["Title"] = "Detail Pengajuan Material";
+}
+
+<div class="container mt-4 mb-5" style="max-width: 1200px;">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <a asp-action="Index" class="btn btn-outline-dark fw-bold shadow-sm px-3">
+            &larr; Kembali ke Antrean
+        </a>
+        <h4 class="mb-0 fw-bold text-dark">Detail Request Pengadaan</h4>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8 col-md-7">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-dark text-white fw-bold py-3">
+                    Informasi Detail Kebutuhan
+                </div>
+                <div class="card-body bg-light p-4">
+                    <div class="row mb-4">
+                        <div class="col-sm-6">
+                            <small class="text-muted d-block text-uppercase fw-bold mb-1" style="font-size: 0.75rem;">Pemohon</small>
+                            <span class="fw-bold text-dark fs-6">@Model.NamaPemohon</span>
+                            <span class="badge bg-secondary ms-1">@Model.Departemen</span>
+                        </div>
+                        <div class="col-sm-6 text-sm-end mt-3 mt-sm-0">
+                            <small class="text-muted d-block text-uppercase fw-bold mb-1" style="font-size: 0.75rem;">Waktu Pengajuan</small>
+                            <span class="fw-bold text-dark">@Model.TanggalRequest.ToString("dd MMM yyyy, HH:mm")</span>
+                        </div>
+                    </div>
+
+                    <hr class="border-secondary border-opacity-25 mb-4" />
+
+                    <div class="mb-4">
+                        <small class="text-muted d-block text-uppercase fw-bold mb-2" style="font-size: 0.75rem;">Kategori Request</small>
+                        @if (Model.JenisRequest == "Barang Baru")
+                        {
+                            <span class="badge bg-success-subtle text-success border border-success border-opacity-50 px-3 py-2 fs-6 rounded-pill shadow-sm">Barang Baru (Belum Terdaftar)</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-primary-subtle text-primary border border-primary border-opacity-50 px-3 py-2 fs-6 rounded-pill shadow-sm">Barang Lama (Restok / Tersedia)</span>
+                        }
+                    </div>
+
+                    <div class="p-4 bg-white border rounded shadow-sm mb-4">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <small class="text-muted d-block text-uppercase fw-bold mb-1" style="font-size: 0.75rem;">Spesifikasi / Nama Barang</small>
+                                <span class="fw-bold text-dark fs-5">@Model.NamaBarang</span>
+                                @if (!string.IsNullOrEmpty(Model.NoMaterial))
+                                {
+                                    <div class="font-monospace text-muted small mt-1">Nomor Material: @Model.NoMaterial</div>
+                                }
+                            </div>
+                            <div class="col-md-4 text-md-end mt-3 mt-md-0 border-start-md">
+                                <small class="text-muted d-block text-uppercase fw-bold mb-1" style="font-size: 0.75rem;">Kuantitas Diminta</small>
+                                <span class="fw-bolder text-primary fs-3">@Model.Jumlah</span>
+                                <span class="text-muted fw-bold fs-6">@Model.Satuan</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <small class="text-muted d-block text-uppercase fw-bold mb-2" style="font-size: 0.75rem;">Alasan Kebutuhan / Keterangan</small>
+                        <p class="text-dark bg-white p-3 rounded border shadow-sm" style="white-space: pre-line; line-height: 1.6;">@Model.AlasanKebutuhan</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 col-md-5">
+            <div class="card shadow border-0 h-100">
+                @if (Model.Status == "Pending")
+                {
+                    <div class="card-header bg-warning text-dark fw-bold py-3">
+                        Tindakan Admin Gudang
+                    </div>
+                    <form asp-action="ProsesRequest" method="post" class="d-flex flex-column h-100">
+                        <div class="card-body bg-white p-4 flex-grow-1">
+                            <input type="hidden" name="id" value="@Model.Id" />
+
+                            <div class="mb-4">
+                                <label class="form-label fw-bold text-dark">Keputusan Pengajuan</label>
+                                <select name="statusKeputusan" class="form-select border-dark shadow-sm fw-bold mb-2" id="selectKeputusan" required>
+                                    <option value="">-- Pilih Keputusan --</option>
+                                    <option value="Disetujui">Disetujui (Akan Diproses)</option>
+                                    <option value="Ditolak">Ditolak</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label fw-bold text-dark">Catatan Admin / Balasan</label>
+                                <textarea name="catatanAdmin" class="form-control border-secondary shadow-sm" rows="6" placeholder="Berikan catatan (misal: 'Sedang dipesankan ke vendor, estimasi 3 hari tiba')..." required></textarea>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-light border-top p-3 mt-auto">
+                            <button type="submit" class="btn btn-dark w-100 fw-bold shadow-sm py-2">Kirim Keputusan & Catatan</button>
+                        </div>
+                    </form>
+                }
+                else
+                {
+                    <div class="card-header bg-secondary text-white fw-bold py-3">
+                        Status Eksekusi Admin
+                    </div>
+                    <div class="card-body bg-light text-center p-4">
+                        <h6 class="text-muted mb-3">Status Saat Ini:</h6>
+                        @if (Model.Status == "Disetujui")
+                        {
+                            <span class="badge bg-success px-4 py-3 fs-5 rounded-pill shadow-sm mb-4 d-block">DISETUJUI</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-danger px-4 py-3 fs-5 rounded-pill shadow-sm mb-4 d-block">DITOLAK</span>
+                        }
+
+                        <div class="text-start bg-white p-4 border rounded shadow-sm">
+                            <small class="text-muted d-block text-uppercase fw-bold mb-2" style="font-size: 0.75rem;">Catatan Balasan Admin</small>
+                            <p class="text-dark mb-0" style="white-space: pre-line; line-height: 1.6;">@(string.IsNullOrEmpty(Model.CatatanAdmin) ? "Tidak ada catatan." : Model.CatatanAdmin)</p>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

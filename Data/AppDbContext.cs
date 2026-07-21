@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using BarangKeluarDinas.Models; // Sesuaikan dengan nama project Anda
+using BarangKeluarDinas.Models;
 
 namespace BarangKeluarDinas.Data;
 
@@ -16,4 +16,5 @@ public class AppDbContext : DbContext
     public DbSet<MasterMaterial> MasterMaterial { get; set; }
     public DbSet<HistoryMaterial> HistoryMaterial { get; set; }
     public DbSet<DataBarcode> DataBarcode { get; set; }
+    public DbSet<RequestMaterial> RequestMaterial { get; set; }
 }
